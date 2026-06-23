@@ -30,6 +30,8 @@ import {
   type SentenceContext,
   type SentenceRunState,
   type SentenceQuizResult,
+  type GraduationHook,
+  isMastered,
 } from '../src/index.js';
 import { mockDecks } from '../data/mock/mock-decks.js';
 import { LEARNING_CONFIG } from './config.js';
@@ -297,9 +299,11 @@ export async function runAdaptiveLoop(
   masteryThreshold: number,
   streakThresholds: StreakThresholds,
   initialRunState: RunState = new Map(),
+  initialSentenceRunState: SentenceRunState = new Map(),
   recheckIds: Set<string> = new Set(),
   strategy?: AutoAnswerStrategy,
-): Promise<RunState> {
+  onGraduation?: GraduationHook,
+): Promise<{ runState: RunState; sentenceRunState: SentenceRunState }> {
   const config: SessionConfig = {
     wordsPerBatch,
     masteryThreshold,
@@ -307,8 +311,9 @@ export async function runAdaptiveLoop(
     maxRetryPerSession: 5,
   };
 
+  const snapshotRunState = new Map(initialRunState);
   let state = initAdaptiveSession(words, config, recheckIds, initialRunState);
-  const sentenceRunState: SentenceRunState = new Map();
+  const sentenceRunState: SentenceRunState = new Map(initialSentenceRunState);
   let totalCorrect = 0;
   let totalQuestions = 0;
   let totalMastered = 0;
@@ -382,10 +387,23 @@ export async function runAdaptiveLoop(
     }
   }
 
+  if (onGraduation) {
+    const graduatedWordIds: string[] = [];
+    for (const [wordId, ws] of state.runState) {
+      if (isMastered(ws, masteryThreshold)) {
+        const prev = snapshotRunState.get(wordId);
+        if (!prev || !isMastered(prev, masteryThreshold)) {
+          graduatedWordIds.push(wordId);
+        }
+      }
+    }
+    onGraduation(graduatedWordIds, state.runState);
+  }
+
   console.log('\n=== Run Complete ===');
   console.log(`Batches: ${String(state.batchNum)}`);
   console.log(`Score:   ${String(totalCorrect)} / ${String(totalQuestions)}`);
   console.log(`Mastered: ${String(totalMastered)}`);
 
-  return state.runState;
+  return { runState: state.runState, sentenceRunState };
 }
