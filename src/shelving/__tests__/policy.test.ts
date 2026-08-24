@@ -63,6 +63,13 @@ describe('evaluateShelving', () => {
     expect(result.toUnshelve).toEqual([]);
   });
 
+  it('duplicate stagnant ID never steals a second slot', () => {
+    // w1 appears twice — should still only occupy one slot, letting w2 in
+    const result = evaluateShelving(['w1', 'w1', 'w2'], new Set(), config);
+    expect(result.toShelve).toEqual(['w1', 'w2']);
+    expect(result.toUnshelve).toEqual([]);
+  });
+
   it('maxShelved=0 → toShelve: [] always', () => {
     const zeroConfig: ShelvingConfig = { ...config, maxShelved: 0 };
     const result = evaluateShelving(['a', 'b'], new Set(), zeroConfig);

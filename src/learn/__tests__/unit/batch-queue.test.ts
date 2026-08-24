@@ -60,6 +60,27 @@ describe('BatchQueueManager (Pure Functions)', () => {
     expect(isBatchDone(res.state)).toBe(true);
   });
 
+  it('blocks a second in-batch retry once the running session total hits the session cap', () => {
+    // Regression: retryPerWordCap must not push a word's session total past
+    // retryPerSessionCap within a single batch. Word starts at 0 prior
+    // session retries, cap is 1, but retryPerWordCap allows 2 — the second
+    // retry must be blocked once the first one brings the running total to 1.
+    let state = initBatchState([q1], 2, new Map(), 1);
+
+    let res = nextQuestion(state);
+    state = submitBatchResult(res.state, { wordId: 'w1', correct: false }); // retry #1 granted
+
+    res = nextQuestion(state);
+    expect(res.question).toBe(q1);
+    state = submitBatchResult(res.state, { wordId: 'w1', correct: false }); // retry #2 must be blocked
+
+    res = nextQuestion(state);
+    expect(res.question).toBeNull();
+
+    const output = finishBatch(state);
+    expect(output.sessionRetryCounts.get('w1')).toBe(1);
+  });
+
   it('respects the session-wide retry cap', () => {
     // Word w1 already hit the session cap of 5 in previous batches
     const sessionRetryCounts = new Map([['w1', 5]]);

@@ -115,7 +115,7 @@ export function nextActivePool(
     return !wordState || !isMastered(wordState, masteryThreshold);
   });
 
-  const freeSlots = wordsPerBatch - remaining.length;
+  const freeSlots = Math.max(0, wordsPerBatch - remaining.length);
   const newItems = eligibleQueue.slice(0, freeSlots);
   const newQueue = eligibleQueue.slice(freeSlots);
 

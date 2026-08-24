@@ -66,6 +66,19 @@ describe('nextActivePool — recheckExempt', () => {
     expect(result.active.map(i => i.id)).toEqual(['w2']);
     expect(result.queue).toHaveLength(0);
   });
+
+  it('does not pull queue items into active when active is already at or over wordsPerBatch', () => {
+    // Regression: freeSlots going negative (wordsPerBatch < remaining active count)
+    // must add zero items, not slice(0, negativeNumber) worth of the queue.
+    const active = [makeItem('w1')];
+    const queue = [makeItem('q1'), makeItem('q2'), makeItem('q3')];
+    const runState = makeState({ w1: { mastery: 0 }, q1: { mastery: 0 }, q2: { mastery: 0 }, q3: { mastery: 0 } });
+
+    const result = nextActivePool(active, queue, 0, runState, 3);
+
+    expect(result.active.map(i => i.id)).toEqual(['w1']);
+    expect(result.queue.map(i => i.id)).toEqual(['q1', 'q2', 'q3']);
+  });
 });
 
 // ---------------------------------------------------------------------------

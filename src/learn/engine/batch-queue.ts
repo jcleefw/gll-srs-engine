@@ -106,11 +106,16 @@ export function submitBatchResult(
   if (!result.correct) {
     const id = getResultId(result);
     const batchRetries = nextBatchRetryCounts.get(id) || 0;
-    const totalSessionRetries = state.sessionRetryCounts.get(id) || 0;
+    // Running total, not the static pre-batch snapshot: retries already
+    // granted earlier in this same batch count toward the session cap too,
+    // otherwise retryPerWordCap can push a word past retryPerSessionCap
+    // within a single batch.
+    const priorSessionRetries = state.sessionRetryCounts.get(id) || 0;
+    const runningSessionRetries = priorSessionRetries + batchRetries;
 
     // Check both the per-batch cap and the per-session cap
     const canRetryInBatch = batchRetries < state.retryPerWordCap;
-    const canRetryInSession = totalSessionRetries < state.retryPerSessionCap;
+    const canRetryInSession = runningSessionRetries < state.retryPerSessionCap;
 
     if (canRetryInBatch && canRetryInSession) {
       const cached = state.questionCache.get(id);

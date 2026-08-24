@@ -24,7 +24,7 @@ export function evaluateShelving(
     return { toShelve: [], toUnshelve: [] };
   }
 
-  const candidates = stagnantWordIds.filter((id) => !currentlyShelved.has(id));
+  const candidates = [...new Set(stagnantWordIds)].filter((id) => !currentlyShelved.has(id));
   const toShelve = candidates.slice(0, availableSlots);
 
   return { toShelve, toUnshelve: [] };
