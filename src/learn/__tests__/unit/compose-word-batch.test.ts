@@ -258,6 +258,17 @@ describe('composeWordBatchMulti', () => {
       expect(q.choices).toHaveLength(4);
     }
   });
+
+  it('omitting shuffle produces varying order, like shuffle: true (not deterministic like shuffle: false)', () => {
+    const orderings = new Set<string>();
+
+    for (let i = 0; i < 10; i++) {
+      const batch = composeWordBatchMulti(words, pool, { questionLimit: 5 });
+      orderings.add(batch.map(q => `${q.wordId}::${q.direction}`).join('|'));
+    }
+
+    expect(orderings.size).toBeGreaterThan(1);
+  });
 });
 
 describe('composeWordBatchMulti — edge cases', () => {

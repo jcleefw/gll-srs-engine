@@ -21,6 +21,43 @@ describe('FsrsScheduler.seed', () => {
     const weak = s.seed('w2', perf({ correctStreak: 1, lapses: 3, correctRatio: 0.4 }), NOW);
     expect(strong.due.getTime()).toBeGreaterThan(weak.due.getTime());
   });
+
+  describe('grade mapping (seedRating tiers)', () => {
+    const dueOf = (o: Partial<GraduationPerformance>): number =>
+      new FsrsScheduler().seed('w', perf(o), NOW).due.getTime();
+
+    it('maps easy, good, and hard performance to three distinct due dates', () => {
+      const easy = dueOf({ correctStreak: 4, lapses: 0, correctRatio: 1 });
+      const good = dueOf({ correctStreak: 1, lapses: 2, correctRatio: 0.7 });
+      const hard = dueOf({ correctStreak: 1, lapses: 3, correctRatio: 0.4 });
+      expect(easy).toBeGreaterThan(good);
+      expect(good).toBeGreaterThan(hard);
+    });
+
+    it('pins the easy-streak boundary: correctStreak >= 4 with zero lapses is easy', () => {
+      const atBoundary = dueOf({ correctStreak: 4, lapses: 0, correctRatio: 1 });
+      const belowBoundary = dueOf({ correctStreak: 3, lapses: 0, correctRatio: 1 });
+      expect(atBoundary).toBeGreaterThan(belowBoundary);
+    });
+
+    it('a single lapse disqualifies easy even with a long streak', () => {
+      const oneLapse = dueOf({ correctStreak: 6, lapses: 1, correctRatio: 1 });
+      const zeroLapses = dueOf({ correctStreak: 6, lapses: 0, correctRatio: 1 });
+      expect(oneLapse).toBeLessThan(zeroLapses);
+    });
+
+    it('pins the good-ratio boundary: correctRatio >= 0.7 with <=2 lapses is good, not hard', () => {
+      const atBoundary = dueOf({ correctStreak: 1, lapses: 2, correctRatio: 0.7 });
+      const belowBoundary = dueOf({ correctStreak: 1, lapses: 2, correctRatio: 0.69 });
+      expect(atBoundary).toBeGreaterThan(belowBoundary);
+    });
+
+    it('pins the good-lapses boundary: lapses <= 2 qualifies, lapses === 3 falls to hard', () => {
+      const atBoundary = dueOf({ correctStreak: 1, lapses: 2, correctRatio: 0.9 });
+      const overBoundary = dueOf({ correctStreak: 1, lapses: 3, correctRatio: 0.9 });
+      expect(atBoundary).toBeGreaterThan(overBoundary);
+    });
+  });
 });
 
 describe('FsrsScheduler.schedule', () => {

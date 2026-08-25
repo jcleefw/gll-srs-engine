@@ -59,6 +59,7 @@ export function processRecheckResult(
     }
   } else {
     nextState = updateRunState(runState, wordId, wasCorrect, streakThresholds);
+    // equivalent mutant: Set.delete on an absent key is a no-op, so forcing this guard is unobservable. Do not chase.
     if (nextReentered.has(wordId)) {
       const wordState = nextState.get(wordId);
       if (wordState && isMastered(wordState, masteryThreshold)) {
@@ -74,13 +75,7 @@ export function processRecheckResult(
   };
 }
 
-/**
- * Per-result recheck flags for a batch: true where the answer is a recheck
- * (word in recheckPending, consumed once), matching processRecheckResult's
- * branch guard exactly. Lets a server-authoritative client label each replayed
- * answer without reimplementing recheck logic. Call with the pre-advance
- * recheckPending and the batch's word results in answer order.
- */
+/** Per-result recheck flags: true where the word was in recheckPending (consumed once). */
 export function classifyRechecks(
   results: WordQuizResult[],
   recheckPending: Set<string>,

@@ -106,6 +106,21 @@ describe('composeSentenceBatch', () => {
       expect(q.prompt).toBe('หิวไปกิน');
     });
 
+    it('prompt is native tiles joined with space for a space-joined language', () => {
+      const enCtx: SentenceContext = { sentenceId: 's', englishSentence: 'I eat', wordOrder: ['a', 'b'] };
+      const enTiles: SentenceTile[] = [
+        { wordId: 'a', native: 'Je',    romanization: 'je',   english: 'I'   },
+        { wordId: 'b', native: 'mange', romanization: 'mɑ̃ʒ', english: 'eat' },
+      ];
+      const [,, q] = composeSentenceBatch(enCtx, enTiles, 'en', { shuffle: false });
+      expect(q.prompt).toBe('Je mange');
+    });
+
+    it('falls back to space-joined for a language absent from LANGUAGE_CONFIG', () => {
+      const [,, q] = composeSentenceBatch(ctx, tiles, 'xx-unknown', { shuffle: false });
+      expect(q.prompt).toBe('หิว ไป กิน');
+    });
+
     it('answer equals wordOrder', () => {
       const [,, q] = composeSentenceBatch(ctx, tiles, 'th', { shuffle: false });
       expect(q.answer).toEqual(ctx.wordOrder);
@@ -137,6 +152,12 @@ describe('composeSentenceBatch', () => {
     it('all questions have the same answer (wordOrder)', () => {
       const questions = composeSentenceBatch(ctx, tiles, 'th', { shuffle: false });
       expect(questions.every(q => JSON.stringify(q.answer) === JSON.stringify(ctx.wordOrder))).toBe(true);
+    });
+
+    it('defaults to shuffling tiles when options is omitted entirely', () => {
+      const runs = Array.from({ length: 20 }, () => composeSentenceBatch(ctx, tiles, 'th'));
+      const anyReordered = runs.some(([q]) => q.tiles.map(t => t.wordId).join() !== tiles.map(t => t.wordId).join());
+      expect(anyReordered).toBe(true);
     });
   });
 });

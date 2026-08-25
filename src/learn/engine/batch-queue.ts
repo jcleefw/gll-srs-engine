@@ -65,12 +65,14 @@ export function nextQuestion(state: BatchState): {
   state: BatchState;
 } {
   if (state.queue.length === 0) {
+    // forcing this false still falls through to an empty shift() below (equivalent mutant)
     return { question: null, state };
   }
 
   const nextQueue = [...state.queue];
   const q = nextQueue.shift();
   if (!q) {
+    // type-narrowing guard only: shift() on a non-empty array never returns undefined (equivalent mutant)
     return { question: null, state };
   }
   const id = getQuestionId(q);

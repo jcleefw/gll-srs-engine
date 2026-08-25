@@ -121,4 +121,95 @@ describe('assembleBatch', () => {
     const questions = assembleBatch(active, [mockWord], [mockFoundational], 4);
     expect(questions).toHaveLength(4);
   });
+
+  it('shuffle defaults to true: reorders across repeated calls when options are omitted', () => {
+    const active: QuizItem[] = [mockWord, mockFoundational];
+    const orderings = new Set<string>();
+    for (let i = 0; i < 15; i++) {
+      const batch = assembleBatch(active, [mockWord], [mockFoundational], 4);
+      orderings.add(
+        batch.map((q) => questionKey(q as QuizQuestion & { wordId: string; direction: string })).join('|'),
+      );
+    }
+    expect(orderings.size).toBeGreaterThan(1);
+  });
+
+  describe('foundational/word partitioning and limit math', () => {
+    const mockWord2: QuizItem = { ...mockWord, id: 'w2' };
+    const mockWord3: QuizItem = { ...mockWord, id: 'w3' };
+
+    it('routes foundational items only to the foundational thunk, words only to the word thunk', () => {
+      const spy = vi.spyOn(composeWordBatchModule, 'composeWordBatchItems');
+      const active: QuizItem[] = [mockWord, mockFoundational];
+
+      assembleBatch(active, [mockWord], [mockFoundational], 4, { shuffle: false });
+
+      const calledWith = spy.mock.calls.map((call) => call[0]);
+      expect(calledWith).toContainEqual([mockFoundational]);
+      expect(calledWith).toContainEqual([mockWord]);
+
+      spy.mockRestore();
+    });
+
+    it('computes a non-1:1 proportional split (3 foundational : 1 word of 8)', () => {
+      const spy = vi.spyOn(composeWordBatchModule, 'composeWordBatchItems');
+      const foundational2: QuizItem = { ...mockFoundational, id: 'f2' };
+      const foundational3: QuizItem = { ...mockFoundational, id: 'f3' };
+      const active: QuizItem[] = [mockWord, mockFoundational, foundational2, foundational3];
+
+      // eligible.length = 4, activeFoundational.length = 3.
+      // foundationalLimit = round(8 * 3 / 4) = 6; wordLimit = 8 - 6 = 2.
+      assembleBatch(active, [mockWord], [mockFoundational, foundational2, foundational3], 8, {
+        shuffle: false,
+      });
+
+      const foundationalCall = spy.mock.calls.find((call) =>
+        (call[0]).includes(mockFoundational),
+      );
+      const wordCall = spy.mock.calls.find((call) => (call[0]).includes(mockWord));
+      expect(foundationalCall?.[2]).toMatchObject({ questionLimit: 6 });
+      expect(wordCall?.[2]).toMatchObject({ questionLimit: 2 });
+
+      spy.mockRestore();
+    });
+
+    it('all-foundational active list: only the foundational thunk runs, word thunk is skipped', () => {
+      const spy = vi.spyOn(composeWordBatchModule, 'composeWordBatchItems');
+      const active: QuizItem[] = [mockFoundational];
+
+      assembleBatch(active, [], [mockFoundational], 4, { shuffle: false });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy.mock.calls[0]?.[0]).toEqual([mockFoundational]);
+
+      spy.mockRestore();
+    });
+
+    it('all-word active list: only the word thunk runs, foundational thunk is skipped', () => {
+      const spy = vi.spyOn(composeWordBatchModule, 'composeWordBatchItems');
+      const active: QuizItem[] = [mockWord, mockWord2, mockWord3];
+
+      assembleBatch(active, [mockWord, mockWord2, mockWord3], [], 4, { shuffle: false });
+
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy.mock.calls[0]?.[0]).toEqual([mockWord, mockWord2, mockWord3]);
+
+      spy.mockRestore();
+    });
+
+    it('empty eligible list (all excluded): no thunks run, foundationalLimit does not divide by zero', () => {
+      const spy = vi.spyOn(composeWordBatchModule, 'composeWordBatchItems');
+      const active: QuizItem[] = [mockWord];
+
+      const questions = assembleBatch(active, [mockWord], [], 4, {
+        excludeIds: new Set([mockWord.id]),
+        shuffle: false,
+      });
+
+      expect(spy).not.toHaveBeenCalled();
+      expect(questions).toEqual([]);
+
+      spy.mockRestore();
+    });
+  });
 });

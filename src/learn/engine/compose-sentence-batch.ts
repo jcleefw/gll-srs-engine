@@ -3,6 +3,7 @@ import type { SentenceQuestion, SentenceTile } from '../types/quiz.js';
 import { LANGUAGE_CONFIG, type WordJoin } from '../../config/language.js';
 import { shuffle } from '../utils/shuffle.js';
 
+// equivalent mutant: only 'no-space' is checked below, so any other value here is unobservable — do not chase.
 const DEFAULT_WORD_JOIN: WordJoin = 'space';
 
 function joinTiles(tiles: SentenceTile[], field: keyof Pick<SentenceTile, 'native' | 'romanization'>, language: string): string {

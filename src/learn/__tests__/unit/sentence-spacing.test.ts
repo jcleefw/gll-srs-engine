@@ -80,6 +80,15 @@ describe('Sentence Spacing and Eligibility Gates', () => {
     expect(eligibleIds).toContain('sent::002');
   });
 
+  it('a never-seen sentence passes even at batch 0, where a seen-sentence gap check would fail', () => {
+    const sentenceRunState: SentenceRunState = new Map();
+    sentenceRunState.set('sent::001', defaultSentenceState('sent::001'));
+
+    const eligible = resolveEligibleContexts(testCorpus, runState, allPool, sentenceRunState, 0, testConfig);
+
+    expect(eligible.map((e) => e.ctx.sentenceId)).toContain('sent::001');
+  });
+
   it('excludes sentence from consecutive batch (back-to-back spacing failure)', () => {
     const sentenceRunState: SentenceRunState = new Map();
     const s1 = defaultSentenceState('sent::001');
@@ -268,5 +277,53 @@ describe('Sentence Spacing and Eligibility Gates', () => {
       expect(eligibleIds).toContain('sent::001');
       expect(eligibleIds).toContain('sent::002');
     });
+  });
+
+  describe('word-seen gate', () => {
+    it('excludes a sentence when any one of its words has not met minSeenForSentence', () => {
+      const partialRunState: RunState = new Map();
+      partialRunState.set('th::หิว', { wordId: 'th::หิว', seen: 2, correct: 2, mastery: 0, correctStreak: 0, wrongStreak: 0, lapses: 0 });
+      partialRunState.set('th::แล้ว', { wordId: 'th::แล้ว', seen: 0, correct: 0, mastery: 0, correctStreak: 0, wrongStreak: 0, lapses: 0 });
+
+      const sentenceRunState: SentenceRunState = new Map();
+      sentenceRunState.set('sent::001', defaultSentenceState('sent::001'));
+
+      const eligible = resolveEligibleContexts(testCorpus, partialRunState, allPool, sentenceRunState, 1, testConfig);
+
+      expect(eligible.map((e) => e.ctx.sentenceId)).not.toContain('sent::001');
+    });
+
+    it('includes a sentence once every one of its words has met minSeenForSentence', () => {
+      const sentenceRunState: SentenceRunState = new Map();
+      sentenceRunState.set('sent::001', defaultSentenceState('sent::001'));
+
+      const eligible = resolveEligibleContexts(testCorpus, runState, allPool, sentenceRunState, 1, testConfig);
+
+      expect(eligible.map((e) => e.ctx.sentenceId)).toContain('sent::001');
+    });
+  });
+
+  describe('tile content', () => {
+    it('builds tiles carrying the actual word content, not empty placeholders', () => {
+      const sentenceRunState: SentenceRunState = new Map();
+      sentenceRunState.set('sent::001', defaultSentenceState('sent::001'));
+
+      const eligible = resolveEligibleContexts(testCorpus, runState, allPool, sentenceRunState, 1, testConfig);
+      const sent1 = eligible.find((e) => e.ctx.sentenceId === 'sent::001')!;
+
+      expect(sent1.tiles[0]).toMatchObject({ wordId: 'th::หิว', native: 'หิว' });
+    });
+  });
+});
+
+describe('updateSentenceRunState — persistence', () => {
+  it('persists the updated state back into the map for a brand-new sentenceId', () => {
+    const sentenceRunState: SentenceRunState = new Map();
+    const results = [{ sentenceId: 'sent::new', correct: true }];
+
+    updateSentenceRunState(sentenceRunState, results, 1, testConfig);
+
+    expect(sentenceRunState.has('sent::new')).toBe(true);
+    expect(sentenceRunState.get('sent::new')?.sentenceStreak).toBe(1);
   });
 });

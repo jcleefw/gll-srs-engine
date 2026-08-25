@@ -38,6 +38,7 @@ export function assembleBatch(
   const activeWords = eligible.filter((item) => !('foundationalType' in item));
 
   // Partition the questionLimit proportionally between foundational and vocabulary
+  // eligible.length > 0 guard: unread when eligible is empty (equivalent mutant)
   const foundationalLimit =
     eligible.length > 0
       ? Math.round((wordsPerBatch * activeFoundational.length) / eligible.length)

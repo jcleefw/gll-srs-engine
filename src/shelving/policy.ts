@@ -20,6 +20,8 @@ export function evaluateShelving(
 ): ShelvingDecision {
   const availableSlots = config.maxShelved - currentlyShelved.size;
 
+  // equivalent mutant (ADR D7): `<= 0` vs `< 0` only differ at availableSlots === 0, where
+  // slice(0, 0) below would return [] anyway — both branches are observably identical. Do not chase.
   if (availableSlots <= 0) {
     return { toShelve: [], toUnshelve: [] };
   }

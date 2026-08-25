@@ -1,7 +1,24 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { shuffle } from '../../utils/shuffle.js';
 
 describe('shuffle', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('scales the swap index by (i + 1), not (i - 1)', () => {
+    // i = 1 (only iteration for a 2-element array): (i + 1) = 2 lets j land on 0 or 1;
+    // (i - 1) = 0 forces j = floor(random * 0) = 0 every time, always swapping a[1] with a[0].
+    vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    expect(shuffle([1, 2])).toEqual([1, 2]);
+  });
+
+  it('loop bound excludes i = 0 — Math.random is called exactly (length - 1) times', () => {
+    const randomSpy = vi.spyOn(Math, 'random').mockReturnValue(0);
+    shuffle([1, 2, 3, 4, 5]);
+    expect(randomSpy).toHaveBeenCalledTimes(4);
+  });
+
   it('returns an array of the same length', () => {
     expect(shuffle([1, 2, 3, 4, 5])).toHaveLength(5);
   });

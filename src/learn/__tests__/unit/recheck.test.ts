@@ -162,6 +162,20 @@ describe('processRecheckResult — wrong on first attempt', () => {
   });
 });
 
+describe('processRecheckResult — default streak thresholds', () => {
+  it('applies DEFAULT_STREAK_THRESHOLDS (correctStreakThreshold: 2) when streakThresholds is omitted', () => {
+    // correctStreak: 1 already; one more correct answer must cross the default threshold of 2 and increment mastery.
+    const runState: RunState = new Map([['w1', { wordId: 'w1', seen: 5, correct: 3, mastery: 0, correctStreak: 1, wrongStreak: 0, lapses: 0 }]]);
+    const recheckPending = new Set<string>();
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.runState.get('w1')?.mastery).toBe(1);
+    expect(result.runState.get('w1')?.correctStreak).toBe(2);
+  });
+});
+
 describe('processRecheckResult — wrong on second attempt (recheckReentered)', () => {
   it('calls updateRunState normally — seen increments', () => {
     const runState = makeState({ w1: { mastery: 3, seen: 5 } });
@@ -209,6 +223,36 @@ describe('processRecheckResult — non-recheck word', () => {
     const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
 
     expect(result.runState.get('w1')?.seen).toBe(3);
+  });
+
+  it('leaves an unrelated word in recheckReentered untouched (guarded by nextReentered.has(wordId))', () => {
+    // w2 is mastered and in recheckReentered, but w1 (not w2) is the word being answered.
+    // If the `nextReentered.has(wordId)` guard were skipped, w2 would be wrongly deleted too.
+    const runState = makeState({ w1: { mastery: 0, seen: 2 }, w2: { mastery: 3 } });
+    const recheckPending = new Set<string>();
+    const recheckReentered = new Set(['w2']);
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.recheckReentered.has('w2')).toBe(true);
+  });
+
+  it('creates a fresh word-state entry when the word has never been seen before a recheck', () => {
+    const runState: RunState = new Map();
+    const recheckPending = new Set(['w1']);
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.runState.get('w1')).toEqual({
+      wordId: 'w1',
+      seen: 1,
+      correct: 1,
+      mastery: 0,
+      correctStreak: 0,
+      wrongStreak: 0,
+      lapses: 0,
+    });
   });
 });
 

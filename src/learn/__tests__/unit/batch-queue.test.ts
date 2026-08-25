@@ -7,6 +7,7 @@ import {
   isBatchDone,
 } from '../../engine/batch-queue.js';
 import { type QuizQuestion } from '../../types/quiz.js';
+import { type BatchState } from '../../engine/batch-queue.js';
 
 describe('BatchQueueManager (Pure Functions)', () => {
   const q1: QuizQuestion = {
@@ -147,6 +148,26 @@ describe('BatchQueueManager (Pure Functions)', () => {
     const output = finishBatch(state);
     expect(output.results.length).toBe(1);
     expect(isBatchDone(state)).toBe(false); // Queue still had q2
+  });
+
+  it('preserves the cached instance on a cache hit, ignoring the fresh queue instance for the same id', () => {
+    const qCached: QuizQuestion = { ...q1 };
+    const qQueued: QuizQuestion = { ...q1 };
+    const state: BatchState = {
+      queue: [qQueued],
+      results: [],
+      batchRetryCounts: new Map(),
+      questionCache: new Map([['w1', qCached]]),
+      initialCount: 1,
+      retryPerWordCap: 1,
+      retryPerSessionCap: 5,
+      sessionRetryCounts: new Map(),
+    };
+
+    const res = nextQuestion(state);
+    expect(res.question).toBe(qCached);
+    expect(res.question).not.toBe(qQueued);
+    expect(res.state.questionCache.get('w1')).toBe(qCached);
   });
 
   it('re-enqueues sentence questions (word-block) correctly', () => {
