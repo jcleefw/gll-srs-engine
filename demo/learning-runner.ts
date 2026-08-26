@@ -12,8 +12,8 @@ import { isMastered } from '../src/learn/index.js';
 import type { RunState, SentenceRunState, WordState } from '../src/learn/index.js';
 import {
   CorrectAutoAnswerStrategy,
-} from './auto-answer-strategy.js';
-import type { AutoAnswerStrategy } from './auto-answer-strategy.js';
+} from '../test-support/auto-answer-strategy.js';
+import type { AutoAnswerStrategy } from '../test-support/auto-answer-strategy.js';
 import { AUTO_MODE, ENABLE_MOCK_DB, LEARNING_CONFIG, STREAK_THRESHOLDS } from './config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

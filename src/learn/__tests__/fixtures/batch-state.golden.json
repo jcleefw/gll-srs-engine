@@ -1,0 +1,24 @@
+{
+  "correct": 12,
+  "total": 14,
+  "results": [
+    { "wordId": "th::ก", "correct": true },
+    { "wordId": "th::ข", "correct": true },
+    { "wordId": "th::ค", "correct": true },
+    { "wordId": "th::ง", "correct": true },
+    { "wordId": "th::หิว", "correct": true },
+    { "wordId": "th::แล้ว", "correct": true },
+    { "wordId": "th::ไป", "correct": true },
+    { "wordId": "th::กิน", "correct": true },
+    { "wordId": "th::อะไร", "correct": false },
+    { "wordId": "th::กัน", "correct": false },
+    { "wordId": "th::วันนี้", "correct": true },
+    { "wordId": "th::ร้อน", "correct": true },
+    { "wordId": "th::อะไร", "correct": true },
+    { "wordId": "th::กัน", "correct": true }
+  ],
+  "sessionRetryCounts": {
+    "th::อะไร": 1,
+    "th::กัน": 1
+  }
+}

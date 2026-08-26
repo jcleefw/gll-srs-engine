@@ -287,6 +287,23 @@ describe('composeWordBatchMulti — edge cases', () => {
     const batch = composeWordBatchMulti(words, mockConsonants, { questionLimit: 2 });
     expect(batch).toHaveLength(2);
   });
+
+  it('when questionLimit === words.length, coverage alone fills the batch with no filler', () => {
+    const words = mockConsonants.slice(0, 3);
+    const batch = composeWordBatchMulti(words, mockConsonants, { questionLimit: 3, shuffle: false });
+
+    expect(batch).toHaveLength(3);
+    // coverage is exactly [word[0]'s first direction, word[1]'s first direction, word[2]'s first direction]
+    expect(new Set(batch.map((q) => q.wordId))).toEqual(new Set(words.map((w) => w.id)));
+    // one question per word — none of a word's remaining 3 directions leaked in as filler
+    const wordIdCounts = batch.reduce<Record<string, number>>((acc, q) => {
+      acc[q.wordId] = (acc[q.wordId] ?? 0) + 1;
+      return acc;
+    }, {});
+    for (const word of words) {
+      expect(wordIdCounts[word.id]).toBe(1);
+    }
+  });
 });
 
 describe('composeWordBatch with MockWord', () => {

@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import {
   nextQuestion,
   submitBatchResult,
@@ -22,13 +20,6 @@ export function runAutoInteractive(
     count++;
 
     if (question.kind === 'word-block') {
-      console.log(
-        `\nQuestion ${String(count)} [word-block: ${question.direction}]`,
-      );
-      console.log(question.prompt);
-      console.log(`Tiles: ${question.tiles.map((t) => t.native).join(' | ')}`);
-      console.log('Auto: correct');
-
       state = submitBatchResult(state, {
         sentenceId: question.sentenceId,
         correct: true,
@@ -69,6 +60,5 @@ export function runAutoInteractive(
     });
   }
 
-  console.log(`\nScore: ${String(score)} / ${String(state.initialCount)}`);
   return { correct: score, total: count, state };
 }

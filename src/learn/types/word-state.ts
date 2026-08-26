@@ -2,7 +2,7 @@ export interface WordState {
   wordId: string;
   seen: number;
   correct: number;
-  mastery: number;       // 0–5
+  mastery: number;
   correctStreak: number; // consecutive correct answers
   wrongStreak: number;   // consecutive wrong answers
   lapses: number;        // times mastery decremented via wrong-streak threshold (FSRS input)

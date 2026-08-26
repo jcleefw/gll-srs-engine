@@ -2,13 +2,17 @@ import { describe, it, expect } from 'vitest';
 import { mockConsonants } from '../../../../data/mock/mock-consonants.js';
 import { wordPool } from '../../../../data/mock/mock-word-pool.js';
 import { mockDecks } from '../../../../data/mock/mock-decks.js';
-import { runAdaptiveLoop } from '../../../../demo/learning-io.js';
+import {
+  runAdaptiveLoop,
+  type SentenceEligibilityConfig,
+} from '../../../../test-support/adaptive-loop-runner.js';
 import {
   CorrectAutoAnswerStrategy,
   DeterministicAccuracyAutoAnswerStrategy,
   RandomAutoAnswerStrategy,
-} from '../../../../demo/auto-answer-strategy.js';
+} from '../../../../test-support/auto-answer-strategy.js';
 import { isMastered } from '../../types/word-state.js';
+import type { SentenceContext } from '../../index.js';
 
 const config = {
   foundationalWordsCount: 2,
@@ -17,6 +21,8 @@ const config = {
   maxMastery: 2,
   correctStreakThreshold: 2,
   wrongStreakThreshold: 2,
+  maxRetryPerWord: 2,
+  maxRetryPerSession: 5,
 };
 
 const streakThresholds = {
@@ -24,6 +30,21 @@ const streakThresholds = {
   wrongStreakThreshold: config.wrongStreakThreshold,
   maxMastery: config.maxMastery,
 };
+
+const sentenceConfig: SentenceEligibilityConfig = {
+  minSeenForSentence: 2,
+  sentenceBatchGap: 1,
+  sentenceCorrectStreakThreshold: 3,
+  sentenceWrongStreakThreshold: 3,
+};
+
+const corpus: SentenceContext[] = mockDecks.flatMap((deck) =>
+  deck.lines.map((line) => ({
+    sentenceId: line.sentenceId,
+    englishSentence: line.english,
+    wordOrder: line.words.map((w) => w.id),
+  })),
+);
 
 describe('Auto Mode Scenarios', () => {
   it('perfect scenario: CorrectAutoAnswerStrategy reaches 100% accuracy', async () => {
@@ -42,12 +63,13 @@ describe('Auto Mode Scenarios', () => {
       words,
       wordPool,
       mockConsonants,
+      corpus,
       config.wordsPerBatch,
       config.masteryThreshold,
       streakThresholds,
-      new Map(),
-      new Map(),
-      new Set(),
+      sentenceConfig,
+      config.maxRetryPerWord,
+      config.maxRetryPerSession,
       strategy,
     );
 
@@ -78,12 +100,13 @@ describe('Auto Mode Scenarios', () => {
       words,
       wordPool,
       mockConsonants,
+      corpus,
       config.wordsPerBatch,
       config.masteryThreshold,
       streakThresholds,
-      new Map(),
-      new Map(),
-      new Set(),
+      sentenceConfig,
+      config.maxRetryPerWord,
+      config.maxRetryPerSession,
       strategy,
     );
 
@@ -120,12 +143,13 @@ describe('Auto Mode Scenarios', () => {
       words,
       wordPool,
       mockConsonants,
+      corpus,
       config.wordsPerBatch,
       config.masteryThreshold,
       streakThresholds,
-      new Map(),
-      new Map(),
-      new Set(),
+      sentenceConfig,
+      config.maxRetryPerWord,
+      config.maxRetryPerSession,
       strategy,
     );
 
@@ -158,12 +182,13 @@ describe('Auto Mode Scenarios', () => {
       words,
       wordPool,
       mockConsonants,
+      corpus,
       config.wordsPerBatch,
       config.masteryThreshold,
       streakThresholds,
-      new Map(),
-      new Map(),
-      new Set(),
+      sentenceConfig,
+      config.maxRetryPerWord,
+      config.maxRetryPerSession,
       strategy1,
     );
 
@@ -172,12 +197,13 @@ describe('Auto Mode Scenarios', () => {
       words,
       wordPool,
       mockConsonants,
+      corpus,
       config.wordsPerBatch,
       config.masteryThreshold,
       streakThresholds,
-      new Map(),
-      new Map(),
-      new Set(),
+      sentenceConfig,
+      config.maxRetryPerWord,
+      config.maxRetryPerSession,
       strategy2,
     );
 

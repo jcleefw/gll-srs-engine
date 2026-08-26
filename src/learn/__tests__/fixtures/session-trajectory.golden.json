@@ -1,0 +1,119 @@
+[
+  {
+    "batchNum": 1,
+    "activeIds": [
+      "th::หิว",
+      "th::แล้ว",
+      "th::ไป"
+    ],
+    "queueIds": [
+      "th::กิน",
+      "th::อะไร",
+      "th::กัน"
+    ],
+    "masteredIds": [
+      "th::หิว"
+    ],
+    "recheckPendingIds": [],
+    "recheckReenteredIds": [
+      "th::หิว"
+    ],
+    "sessionRetryCounts": {
+      "th::แล้ว": 2
+    }
+  },
+  {
+    "batchNum": 2,
+    "activeIds": [
+      "th::แล้ว",
+      "th::ไป",
+      "th::กิน"
+    ],
+    "queueIds": [
+      "th::อะไร",
+      "th::กัน"
+    ],
+    "masteredIds": [
+      "th::หิว"
+    ],
+    "recheckPendingIds": [],
+    "recheckReenteredIds": [],
+    "sessionRetryCounts": {
+      "th::แล้ว": 4
+    }
+  },
+  {
+    "batchNum": 3,
+    "activeIds": [
+      "th::แล้ว",
+      "th::กิน",
+      "th::อะไร"
+    ],
+    "queueIds": [
+      "th::กัน"
+    ],
+    "masteredIds": [
+      "th::หิว",
+      "th::ไป"
+    ],
+    "recheckPendingIds": [],
+    "recheckReenteredIds": [],
+    "sessionRetryCounts": {
+      "th::แล้ว": 5
+    }
+  },
+  {
+    "batchNum": 4,
+    "activeIds": [
+      "th::แล้ว",
+      "th::กิน",
+      "th::อะไร"
+    ],
+    "queueIds": [
+      "th::กัน"
+    ],
+    "masteredIds": [
+      "th::หิว",
+      "th::ไป"
+    ],
+    "recheckPendingIds": [],
+    "recheckReenteredIds": [],
+    "sessionRetryCounts": {
+      "th::แล้ว": 5
+    }
+  },
+  {
+    "batchNum": 5,
+    "activeIds": [
+      "th::แล้ว",
+      "th::อะไร",
+      "th::กัน"
+    ],
+    "queueIds": [],
+    "masteredIds": [
+      "th::หิว",
+      "th::ไป",
+      "th::กิน"
+    ],
+    "recheckPendingIds": [],
+    "recheckReenteredIds": [],
+    "sessionRetryCounts": {}
+  },
+  {
+    "batchNum": 6,
+    "activeIds": [
+      "th::กัน"
+    ],
+    "queueIds": [],
+    "masteredIds": [
+      "th::หิว",
+      "th::แล้ว",
+      "th::ไป",
+      "th::กิน",
+      "th::อะไร"
+    ],
+    "recheckPendingIds": [],
+    "recheckReenteredIds": [],
+    "sessionRetryCounts": {}
+  }
+]

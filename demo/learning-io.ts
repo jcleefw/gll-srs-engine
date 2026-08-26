@@ -32,8 +32,8 @@ import {
 } from '../src/learn/index.js';
 import { mockDecks } from '../data/mock/mock-decks.js';
 import { LEARNING_CONFIG } from './config.js';
-import type { AutoAnswerStrategy } from './auto-answer-strategy.js';
-import { runAutoInteractive } from './auto-answerer.js';
+import type { AutoAnswerStrategy } from '../test-support/auto-answer-strategy.js';
+import { runAutoInteractive } from '../test-support/auto-answerer.js';
 
 const WORD_ID_PREFIX = 'th::';
 const KEYBOARD_EXIT = '';

@@ -31,6 +31,13 @@ export type BatchViolation =
       questionIndex: number;
       /** Stable identity that repeated, e.g. `mcq:w1:native-to-english`. */
       identity: string;
+    }
+  | {
+      kind: 'empty-choices';
+      /** Index of the offending question within the batch. */
+      questionIndex: number;
+      /** The word left with nothing to choose between. */
+      wordId: string;
     };
 
 export interface BatchValidation {
@@ -52,6 +59,7 @@ export interface BatchValidation {
  * Rules checked:
  *  1. No excluded word appears — as a word question or as a sentence tile.
  *  2. No duplicate question identity within the same batch.
+ *  3. No MCQ is unanswerable for want of choices.
  */
 export function validateBatch(
   questions: QuizQuestion[],
@@ -86,6 +94,11 @@ export function validateBatch(
           }
         }
       }
+    }
+
+    // Rule 3 — an MCQ with no choices cannot be answered.
+    if (q.kind === 'mcq' && q.choices.length === 0) {
+      violations.push({ kind: 'empty-choices', questionIndex, wordId: q.wordId });
     }
 
     // Rule 2 — no duplicate question identity.

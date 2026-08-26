@@ -301,6 +301,30 @@ describe('Sentence Spacing and Eligibility Gates', () => {
 
       expect(eligible.map((e) => e.ctx.sentenceId)).toContain('sent::001');
     });
+
+    it('excludes a sentence when one word is exactly one short of minSeenForSentence', () => {
+      const boundaryRunState: RunState = new Map();
+      for (const id of testCorpus[0].wordOrder) {
+        boundaryRunState.set(id, { wordId: id, seen: 2, correct: 2, mastery: 0, correctStreak: 0, wrongStreak: 0, lapses: 0 });
+      }
+      // one word sits at minSeenForSentence - 1, the boundary itself rather than 0
+      boundaryRunState.set(testCorpus[0].wordOrder[0], {
+        wordId: testCorpus[0].wordOrder[0],
+        seen: testConfig.minSeenForSentence - 1,
+        correct: 0,
+        mastery: 0,
+        correctStreak: 0,
+        wrongStreak: 0,
+        lapses: 0,
+      });
+
+      const sentenceRunState: SentenceRunState = new Map();
+      sentenceRunState.set('sent::001', defaultSentenceState('sent::001'));
+
+      const eligible = resolveEligibleContexts(testCorpus, boundaryRunState, allPool, sentenceRunState, 1, testConfig);
+
+      expect(eligible.map((e) => e.ctx.sentenceId)).not.toContain('sent::001');
+    });
   });
 
   describe('tile content', () => {

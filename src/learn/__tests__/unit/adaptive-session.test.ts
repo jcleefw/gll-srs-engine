@@ -99,6 +99,31 @@ describe('initAdaptiveSession', () => {
 
     expect(state.active.map((w) => w.id)).toEqual(['w3', 'w1', 'w2', 'w4']);
   });
+
+  it('recheck items alone meeting wordsPerBatch pull in none of the "other" bucket', () => {
+    const recheckIds = new Set(['w2', 'w3']);
+    const state = initAdaptiveSession(
+      mockWords,
+      { ...config, wordsPerBatch: 2 },
+      recheckIds,
+    );
+
+    expect(state.active.map((w) => w.id)).toEqual(['w2', 'w3']);
+    expect(state.queue.map((w) => w.id)).toEqual(['w1', 'w4']);
+  });
+
+  it('recheck items alone exceeding wordsPerBatch still all enter active, unclamped', () => {
+    const recheckIds = new Set(['w1', 'w2', 'w3']);
+    const state = initAdaptiveSession(
+      mockWords,
+      { ...config, wordsPerBatch: 2 },
+      recheckIds,
+    );
+
+    expect(state.active.map((w) => w.id)).toEqual(['w1', 'w2', 'w3']);
+    expect(state.active.length).toBeGreaterThan(config.wordsPerBatch);
+    expect(state.queue.map((w) => w.id)).toEqual(['w4']);
+  });
 });
 
 describe('advanceAdaptiveSession', () => {

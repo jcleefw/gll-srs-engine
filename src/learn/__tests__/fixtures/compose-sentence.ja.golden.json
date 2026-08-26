@@ -1,0 +1,95 @@
+[
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::ja::001",
+    "direction": "english-to-native",
+    "prompt": "I eat sushi",
+    "tiles": [
+      {
+        "wordId": "ja::sushi",
+        "native": "寿司",
+        "romanization": "sushi",
+        "english": "sushi"
+      },
+      {
+        "wordId": "ja::i",
+        "native": "私は",
+        "romanization": "watashi wa",
+        "english": "I"
+      },
+      {
+        "wordId": "ja::eat",
+        "native": "食べる",
+        "romanization": "taberu",
+        "english": "eat"
+      }
+    ],
+    "answer": [
+      "ja::i",
+      "ja::eat",
+      "ja::sushi"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::ja::001",
+    "direction": "romanization-to-native",
+    "prompt": "watashi wa taberu sushi",
+    "tiles": [
+      {
+        "wordId": "ja::i",
+        "native": "私は",
+        "romanization": "watashi wa",
+        "english": "I"
+      },
+      {
+        "wordId": "ja::eat",
+        "native": "食べる",
+        "romanization": "taberu",
+        "english": "eat"
+      },
+      {
+        "wordId": "ja::sushi",
+        "native": "寿司",
+        "romanization": "sushi",
+        "english": "sushi"
+      }
+    ],
+    "answer": [
+      "ja::i",
+      "ja::eat",
+      "ja::sushi"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::ja::001",
+    "direction": "native-to-romanization",
+    "prompt": "私は食べる寿司",
+    "tiles": [
+      {
+        "wordId": "ja::sushi",
+        "native": "寿司",
+        "romanization": "sushi",
+        "english": "sushi"
+      },
+      {
+        "wordId": "ja::eat",
+        "native": "食べる",
+        "romanization": "taberu",
+        "english": "eat"
+      },
+      {
+        "wordId": "ja::i",
+        "native": "私は",
+        "romanization": "watashi wa",
+        "english": "I"
+      }
+    ],
+    "answer": [
+      "ja::i",
+      "ja::eat",
+      "ja::sushi"
+    ]
+  }
+]

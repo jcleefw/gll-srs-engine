@@ -1,7 +1,7 @@
 import { describe, it } from 'vitest';
 import fc from 'fast-check';
-import type { ShelvingConfig } from '../types.js';
-import { evaluateShelving } from '../policy.js';
+import type { ShelvingConfig } from '../../types.js';
+import { evaluateShelving } from '../../policy.js';
 
 // ---------------------------------------------------------------------------
 // Arbitraries

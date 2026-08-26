@@ -19,6 +19,17 @@ describe('shuffle', () => {
     expect(randomSpy).toHaveBeenCalledTimes(4);
   });
 
+  it('scales the swap index by (i + 1), not (i - 1) — via rng param', () => {
+    const rng = vi.fn().mockReturnValue(0.99);
+    expect(shuffle([1, 2], rng)).toEqual([1, 2]);
+  });
+
+  it('loop bound excludes i = 0 — rng is called exactly (length - 1) times', () => {
+    const rng = vi.fn().mockReturnValue(0);
+    shuffle([1, 2, 3, 4, 5], rng);
+    expect(rng).toHaveBeenCalledTimes(4);
+  });
+
   it('returns an array of the same length', () => {
     expect(shuffle([1, 2, 3, 4, 5])).toHaveLength(5);
   });
