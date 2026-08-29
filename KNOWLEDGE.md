@@ -24,7 +24,7 @@ Practice batches draw from a deck's word pool, guaranteeing every active word ap
 
 ## batch-validation
 
-The engine runs a safety-net check on a finished batch, flagging two kinds of problems: a word that should have been excluded sneaking back in — either as its own question or hidden inside a sentence's word tiles — and the same question appearing twice in one batch. The check only reports problems; it never fixes or blocks anything itself, leaving that decision to the caller.
+The engine runs a safety-net check on a finished batch, flagging three kinds of problems: a word that should have been excluded sneaking back in — either as its own question or hidden inside a sentence's word tiles; the same question appearing twice in one batch; and a multiple-choice question left with no answer choices to pick from. The check only reports problems; it never fixes or blocks anything itself, leaving that decision to the caller.
 
 ## foundational-content
 

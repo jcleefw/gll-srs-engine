@@ -6,6 +6,7 @@ import {
   isMastered,
 } from '../types/word-state.js';
 import type { WordQuizResult } from '../types/quiz.js';
+import type { EngineHooks } from '../types/hooks.js';
 
 const DEFAULT_STREAK_THRESHOLDS: StreakThresholds = {
   correctStreakThreshold: 2,
@@ -98,6 +99,7 @@ export function nextActivePool(
   runState: RunState,
   masteryThreshold: number,
   recheckExempt: Set<string> = new Set(),
+  hooks?: EngineHooks,
 ): { active: QuizItem[]; queue: QuizItem[] } {
   const remaining = active.filter((item) => {
     if (recheckExempt.has(item.id)) return true;
@@ -113,6 +115,14 @@ export function nextActivePool(
   const freeSlots = Math.max(0, wordsPerBatch - remaining.length);
   const newItems = eligibleQueue.slice(0, freeSlots);
   const newQueue = eligibleQueue.slice(freeSlots);
+
+  const retired = active.length - remaining.length;
+  if (retired > 0 || newItems.length > 0) {
+    hooks?.onPoolAdvanced?.(active.length, {
+      retired,
+      refilled: newItems.length,
+    });
+  }
 
   return { active: [...remaining, ...newItems], queue: newQueue };
 }
@@ -170,6 +180,7 @@ export function getNewlyMasteredIds(
   nextState: RunState,
   wordIds: string[],
   masteryThreshold: number,
+  hooks?: EngineHooks,
 ): string[] {
   const newlyMasteredIds: string[] = [];
 
@@ -181,6 +192,10 @@ export function getNewlyMasteredIds(
         newlyMasteredIds.push(wordId);
       }
     }
+  }
+
+  if (newlyMasteredIds.length > 0) {
+    hooks?.onMastered?.(newlyMasteredIds, 'mastery-threshold');
   }
 
   return newlyMasteredIds;

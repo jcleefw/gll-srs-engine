@@ -30,6 +30,7 @@ const CONFIG: SessionConfig = {
   masteryThreshold: 2,
   streakThresholds: { correctStreakThreshold: 2, wrongStreakThreshold: 2, maxMastery: 2 },
   maxRetryPerSession: RETRY_PER_SESSION_CAP,
+  maxRecheckRatio: 0.4,
 };
 
 // wordPool[0] — already mastered before the session starts, and placed into

@@ -1,4 +1,4 @@
-import type { ShelvingConfig, ShelvingDecision } from './types.js';
+import type { ShelvingConfig, ShelvingDecision, ShelvingHooks } from './types.js';
 
 /**
  * Evaluates which stagnant words should be shelved given the current shelving
@@ -17,6 +17,7 @@ export function evaluateShelving(
   stagnantWordIds: string[],
   currentlyShelved: Set<string>,
   config: ShelvingConfig,
+  hooks?: ShelvingHooks,
 ): ShelvingDecision {
   const availableSlots = config.maxShelved - currentlyShelved.size;
 
@@ -28,6 +29,13 @@ export function evaluateShelving(
 
   const candidates = [...new Set(stagnantWordIds)].filter((id) => !currentlyShelved.has(id));
   const toShelve = candidates.slice(0, availableSlots);
+
+  if (toShelve.length > 0) {
+    hooks?.onShelved?.(toShelve, 'stagnant');
+  }
+  if (candidates.length > availableSlots) {
+    hooks?.onShelved?.(candidates.slice(availableSlots), 'cap-reached');
+  }
 
   return { toShelve, toUnshelve: [] };
 }

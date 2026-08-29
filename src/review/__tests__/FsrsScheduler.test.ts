@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { FsrsScheduler } from '../FsrsScheduler.js';
 import type { ReviewCard, GraduationPerformance } from '../types.js';
 
@@ -57,6 +57,33 @@ describe('FsrsScheduler.seed', () => {
       const overBoundary = dueOf({ correctStreak: 1, lapses: 3, correctRatio: 0.9 });
       expect(atBoundary).toBeGreaterThan(overBoundary);
     });
+  });
+});
+
+describe('FsrsScheduler.seed — ReviewHooks.onSeeded', () => {
+  it('emits wordId, inferred rating, and the seeded due date', () => {
+    const onSeeded = vi.fn();
+    const card = new FsrsScheduler().seed('w1', perf(), NOW, { onSeeded });
+    expect(onSeeded).toHaveBeenCalledTimes(1);
+    expect(onSeeded).toHaveBeenCalledWith('w1', 'easy', card.due);
+  });
+
+  it('reflects the tier actually chosen, not always "easy"', () => {
+    const onSeeded = vi.fn();
+    new FsrsScheduler().seed('w2', perf({ correctStreak: 1, lapses: 3, correctRatio: 0.4 }), NOW, {
+      onSeeded,
+    });
+    expect(onSeeded).toHaveBeenCalledWith('w2', 'hard', expect.any(Date));
+  });
+
+  it('does not throw and does not emit when hooks are omitted', () => {
+    expect(() => new FsrsScheduler().seed('w1', perf(), NOW)).not.toThrow();
+  });
+
+  it('seeded card output is unchanged whether or not hooks are supplied', () => {
+    const withHooks = new FsrsScheduler().seed('w1', perf(), NOW, { onSeeded: vi.fn() });
+    const withoutHooks = new FsrsScheduler().seed('w1', perf(), NOW);
+    expect(withHooks).toEqual(withoutHooks);
   });
 });
 

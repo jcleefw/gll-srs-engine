@@ -8,8 +8,8 @@ export type ReviewRating = 'again' | 'hard' | 'good' | 'easy';
  */
 export interface GraduationPerformance {
   correctStreak: number; // final streak at graduation
-  lapses: number;        // times mastery dropped during Learning
-  correctRatio: number;  // correct / seen, range 0..1
+  lapses: number; // times mastery dropped during Learning
+  correctRatio: number; // correct / seen, range 0..1
 }
 
 /**
@@ -22,10 +22,20 @@ export interface ReviewCard {
   schedulerData: unknown; // FsrsScheduler stores the serialised ts-fsrs Card here
 }
 
+export interface ReviewHooks {
+  /** A fresh review card was seeded for a graduated word. */
+  onSeeded?: (wordId: string, rating: ReviewRating, dueAt: Date) => void;
+}
+
 /** Swappable scheduling contract. FsrsScheduler is one implementation. */
 export interface ReviewScheduler {
   /** Create the first ReviewCard for a freshly graduated word. */
-  seed(wordId: string, performance: GraduationPerformance, now: Date): ReviewCard;
+  seed(
+    wordId: string,
+    performance: GraduationPerformance,
+    now: Date,
+    hooks?: ReviewHooks,
+  ): ReviewCard;
   /** Advance a card after a review, given the inferred rating. */
   schedule(card: ReviewCard, rating: ReviewRating, now: Date): ReviewCard;
   /** Is this card due at `now`? */

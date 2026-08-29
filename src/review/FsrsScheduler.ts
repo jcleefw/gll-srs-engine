@@ -13,6 +13,7 @@ import type {
   ReviewCard,
   ReviewRating,
   GraduationPerformance,
+  ReviewHooks,
 } from './types.js';
 
 /** Domain rating → ts-fsrs grade. All four are valid Grades (Manual excluded). */
@@ -40,10 +41,11 @@ export class FsrsScheduler implements ReviewScheduler {
     );
   }
 
-  seed(wordId: string, performance: GraduationPerformance, now: Date): ReviewCard {
+  seed(wordId: string, performance: GraduationPerformance, now: Date, hooks?: ReviewHooks): ReviewCard {
     const fresh = createEmptyCard(now);
-    const grade = RATING_TO_GRADE[seedRating(performance)];
-    const { card } = this.engine.next(fresh, now, grade);
+    const rating = seedRating(performance);
+    const { card } = this.engine.next(fresh, now, RATING_TO_GRADE[rating]);
+    hooks?.onSeeded?.(wordId, rating, card.due);
     return toReviewCard(wordId, card);
   }
 

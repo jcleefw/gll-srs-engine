@@ -17,6 +17,8 @@ export interface SessionConfig {
   masteryThreshold: number;
   streakThresholds: StreakThresholds;
   maxRetryPerSession: number;
+  // Fraction of a batch's slots recheck items may occupy on init; the rest queue up front for later batches.
+  maxRecheckRatio: number;
 }
 
 export function initAdaptiveSession(
@@ -25,8 +27,12 @@ export function initAdaptiveSession(
   recheckIds: Set<string> = new Set(),
   initialRunState?: RunState,
 ): AdaptiveSessionState {
-  const recheckItems = words.filter((w) => recheckIds.has(w.id));
+  const allRecheckItems = words.filter((w) => recheckIds.has(w.id));
   const otherItems = words.filter((w) => !recheckIds.has(w.id));
+
+  const recheckCap = Math.ceil(config.wordsPerBatch * config.maxRecheckRatio);
+  const recheckItems = allRecheckItems.slice(0, recheckCap);
+  const overflowRecheckItems = allRecheckItems.slice(recheckCap);
 
   const active = [
     ...recheckItems,
@@ -37,7 +43,10 @@ export function initAdaptiveSession(
   ];
 
   const activeIds = new Set(active.map((w) => w.id));
-  const queue = words.filter((w) => !activeIds.has(w.id));
+  const queue = [
+    ...overflowRecheckItems,
+    ...words.filter((w) => !activeIds.has(w.id) && !recheckIds.has(w.id)),
+  ];
 
   return {
     active,

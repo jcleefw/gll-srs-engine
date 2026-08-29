@@ -4,6 +4,7 @@ import {
 } from './compose-registry.js';
 import { composeWordBatchItems, type QuizItem } from './compose-word-batch.js';
 import { type QuizQuestion } from '../types/quiz.js';
+import { type EngineHooks } from '../types/hooks.js';
 import { shuffle as shuffleArray } from '../utils/shuffle.js';
 
 export interface AssembleBatchOptions {
@@ -25,6 +26,7 @@ export function assembleBatch(
   foundationalPool: QuizItem[],
   wordsPerBatch: number,
   options: AssembleBatchOptions = {},
+  hooks?: EngineHooks,
 ): QuizQuestion[] {
   const { shuffle = true, extraThunks = [], excludeIds } = options;
 
@@ -45,16 +47,25 @@ export function assembleBatch(
       : 0;
   const wordLimit = wordsPerBatch - foundationalLimit;
 
+  if (eligible.length > 0) {
+    hooks?.onBatchAssembled?.(eligible.length, {
+      foundational: foundationalLimit,
+      vocabulary: wordLimit,
+    });
+  }
+
   const registry = createComposerRegistry();
 
   // shuffle: false — stop shuffling in the inner thunk
   // delegating shuffle to code below. Avoid double shuffling
   if (activeFoundational.length > 0) {
     registry.add(() =>
-      composeWordBatchItems(activeFoundational, foundationalPool, {
-        questionLimit: foundationalLimit,
-        shuffle: false,
-      }),
+      composeWordBatchItems(
+        activeFoundational,
+        foundationalPool,
+        { questionLimit: foundationalLimit, shuffle: false },
+        hooks,
+      ),
     );
   }
 
@@ -62,10 +73,12 @@ export function assembleBatch(
   // delegating shuffle to code below. Avoid double shuffling
   if (activeWords.length > 0) {
     registry.add(() =>
-      composeWordBatchItems(activeWords, wordPool, {
-        questionLimit: wordLimit,
-        shuffle: false,
-      }),
+      composeWordBatchItems(
+        activeWords,
+        wordPool,
+        { questionLimit: wordLimit, shuffle: false },
+        hooks,
+      ),
     );
   }
 

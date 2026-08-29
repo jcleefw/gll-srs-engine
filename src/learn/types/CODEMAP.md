@@ -15,6 +15,7 @@ in `word-state.ts`.
 | `foundational.ts` | Foundational item types (Thai/Japanese consonants, vowels, tones) |
 | `sentence-state.ts` | Sentence scheduling state types and default initializer |
 | `sentence.ts` | Sentence context type — the authored English sentence + native word order used to build sentence questions |
+| `hooks.ts` | Observability hook contract (`EngineHooks`) threaded through `learn/engine/*` for non-throwing progress/decision callbacks — EP28 |
 
 ---
 
@@ -86,3 +87,18 @@ in `word-state.ts`.
 | Export | Kind | Detail |
 | --- | --- | --- |
 | `SentenceContext` | Interface | `{ sentenceId, englishSentence, wordOrder: string[] }` — `wordOrder` is `wordId` refs giving tile order for all directions |
+
+---
+
+## Exports — `hooks.ts`
+
+| Export | Kind | Detail |
+| --- | --- | --- |
+| `IdSetHook` | Type | `(ids: string[], reason: string) => void` — a decision that moved a set of entities, with why |
+| `TransitionHook<T>` | Type | `(id: string, previous: T, next: T) => void` — a before/after state change on one entity |
+| `CapDecisionHook` | Type | `(id: string, current: number, cap: number, decision: 'retry' \| 'drop') => void` — an allow/deny gated by a counter against a cap |
+| `DistributionHook` | Type | `(total: number, parts: Record<string, number>) => void` — how a total was split across named parts |
+| `EngineHooks` | Interface | `{ onBatchAssembled?, onWordBatchComposed?, onPoolAdvanced?: DistributionHook; onMastered?, onSentenceExcluded?: IdSetHook; onRetryDecision?: CapDecisionHook }` — all optional, all fire-and-forget observability callbacks, never affect control flow |
+| `SentenceExclusionReason` | Union | `'word-not-seen-enough' \| 'sentence-inactive' \| 'batch-gap-cooldown' \| 'missing-pool-item'` — reasons a sentence context is filtered out of eligibility, in gate order |
+
+`EngineHooks` is accepted as an optional trailing parameter by `compose-word-batch.ts`, `assemble-batch.ts`, `batch-queue.ts`, `sentence-scheduling.ts`, and `session.ts` (see `src/learn/engine/CODEMAP.md`).

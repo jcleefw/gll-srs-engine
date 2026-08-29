@@ -25,8 +25,8 @@ no side effects.
 
 | Export | Signature | Purpose |
 | --- | --- | --- |
-| `composeWordBatch` | `(item: QuizItem, pool: QuizItem[]) → QuizQuestion[]` | One question per direction for a single item; uses `pool` for distractors |
-| `composeWordBatchMulti` | `(words: QuizItem[], pool: QuizItem[], options: { questionLimit: number; shuffle?: boolean }) → QuizQuestion[N]` | Covers all input words, fills to `questionLimit`; `shuffle: false` for deterministic order |
+| `composeWordBatch` | `(item: QuizItem, pool: QuizItem[], rng?: () => number) → QuizQuestion[]` | One question per direction for a single item; uses `pool` for distractors |
+| `composeWordBatchMulti` | `(words: QuizItem[], pool: QuizItem[], options: { questionLimit: number; shuffle?: boolean; rng?: () => number }, hooks?: EngineHooks) → QuizQuestion[N]` | Covers all input words, fills to `questionLimit`; `shuffle: false` for deterministic order; fires `hooks.onWordBatchComposed(questionLimit, { coverage, filler })` when `words.length > 0` |
 | `composeWordBatchItems` | alias for `composeWordBatchMulti` | Registry-wiring name per batch-execution-mechanics ADR D5 |
 | `FOUNDATIONAL_DIRECTIONS` | `Record<FoundationalType, QuizDirection[]>` | Direction sets per foundational type (consonant/vowel = 4, tone = 2) |
 | `QuizItem` | `type` | `MockFoundational \| MockWord` |
@@ -45,7 +45,7 @@ no side effects.
 
 | Export | Signature | Purpose |
 | --- | --- | --- |
-| `assembleBatch` | `(active: QuizItem[], wordPool: QuizItem[], foundationalPool: QuizItem[], wordsPerBatch: number, options?: AssembleBatchOptions) → QuizQuestion[]` | Orchestrates batch assembly: filters `excludeIds`, splits `active` into foundational vs. vocabulary, proportionally divides `wordsPerBatch` between them, composes each via the registry, optionally shuffles the merged result |
+| `assembleBatch` | `(active: QuizItem[], wordPool: QuizItem[], foundationalPool: QuizItem[], wordsPerBatch: number, options?: AssembleBatchOptions, hooks?: EngineHooks) → QuizQuestion[]` | Orchestrates batch assembly: filters `excludeIds`, splits `active` into foundational vs. vocabulary, proportionally divides `wordsPerBatch` between them, composes each via the registry, optionally shuffles the merged result; fires `hooks.onBatchAssembled(eligible.length, { foundational, vocabulary })` and forwards `hooks` into each `composeWordBatchItems` thunk |
 | `AssembleBatchOptions` | `interface` | `{ shuffle?: boolean (default true); extraThunks?: (() => QuizQuestion[])[]; excludeIds?: Set<string> }` |
 
 ---
@@ -83,10 +83,10 @@ no side effects.
 
 | Export | Signature | Purpose |
 | --- | --- | --- |
-| `initBatchState` | `(questions: QuizQuestion[]) → BatchState` | Seeds the per-batch serving/retry queue |
+| `initBatchState` | `(initialQuestions: QuizQuestion[], retryPerWordCap: number, sessionRetryCounts: Map<string, number>, retryPerSessionCap: number) → BatchState` | Seeds the per-batch serving/retry queue |
 | `isBatchDone` | `(state: BatchState) → boolean` | True once every question has been answered correctly |
-| `nextQuestion` | `(state: BatchState) → { question, state }` | Pops the next question to serve |
-| `submitBatchResult` | `(state: BatchState, answer) → BatchState` | Records an answer; re-enqueues the question on a wrong answer |
+| `nextQuestion` | `(state: BatchState) → { question, state }` | Pops the next question to serve; caches first-served instance per question id |
+| `submitBatchResult` | `(state: BatchState, result: QuizResult, hooks?: EngineHooks) → BatchState` | Records an answer; re-enqueues the question on a wrong answer if under both the per-batch and per-session retry caps; fires `hooks.onRetryDecision(id, runningSessionRetries, retryPerSessionCap, 'retry' \| 'drop')` for every wrong answer |
 | `finishBatch` | `(state: BatchState) → BatchOutput` | Collapses the batch state into a result summary |
 | `BatchOutput` | `interface` | Batch-level result summary |
 | `BatchState` | `interface` | Per-batch queue/retry state |
@@ -98,12 +98,12 @@ no side effects.
 | Export | Signature | Purpose |
 | --- | --- | --- |
 | `processRecheckResult` | `(wordId, wasCorrect, runState, recheckPending, recheckReentered, masteryThreshold, streakThresholds?) → RecheckResultOutput` | Applies one answer; suppresses streak/mastery on first recheck attempt |
-| `classifyRechecks` | — | Splits recheck candidates by pending/reentered state |
-| `nextActivePool` | `(active, queue, questionLimit, runState, masteryThreshold, recheckExempt?) → { active, queue }` | Retires mastered words and fills freed slots from queue |
-| `updateMasteryState` | `(results, runState, prevState, recheckPending, recheckReentered, masteryThreshold, streakThresholds) → MasteryUpdateResult` | Applies a full batch of results; returns `newlyMasteredIds` for this batch |
-| `getNewlyMasteredIds` | — | Extracts the newly-mastered subset from a mastery update |
+| `classifyRechecks` | `(results: WordQuizResult[], recheckPending: Set<string>) → boolean[]` | Per-result recheck flags: true where the word was in `recheckPending` (consumed once) |
+| `nextActivePool` | `(active, queue, wordsPerBatch, runState, masteryThreshold, recheckExempt?, hooks?: EngineHooks) → { active, queue }` | Retires mastered words and fills freed slots from queue; fires `hooks.onPoolAdvanced(active.length, { retired, refilled })` when either count is nonzero |
+| `updateMasteryState` | `(results, runState, recheckPending, recheckReentered, masteryThreshold, streakThresholds) → MasteryUpdateResult` | Applies a full batch of results via repeated `processRecheckResult` calls |
+| `getNewlyMasteredIds` | `(prevState, nextState, wordIds, masteryThreshold, hooks?: EngineHooks) → string[]` | Compares two states to find words that crossed the mastery threshold in the most recent batch; fires `hooks.onMastered(newlyMasteredIds, 'mastery-threshold')` when non-empty |
 | `RecheckResultOutput` | `interface` | `{ runState, recheckPending, recheckReentered }` |
-| `MasteryUpdateResult` | `interface` | `{ runState, recheckPending, recheckReentered, masteredCount, newlyMasteredIds }` |
+| `MasteryUpdateResult` | `interface` | `{ runState, recheckPending, recheckReentered }` — no `masteredCount`/`newlyMasteredIds` fields; newly-mastered ids come from the separate `getNewlyMasteredIds` call |
 
 ---
 
@@ -111,7 +111,7 @@ no side effects.
 
 | Export | Signature | Purpose |
 | --- | --- | --- |
-| `resolveEligibleContexts` | `(corpus, runState, allPool, sentenceRunState, batchNum, config, excludeIds?: Set<string>) → { ctx: SentenceContext; tiles: SentenceTile[] }[]` | Filters sentence contexts by word-seen threshold, active/graduation state, and batch-gap spacing; drops any context referencing an `excludeIds` member (shelved word) since its tile set can no longer satisfy `wordOrder` |
+| `resolveEligibleContexts` | `(corpus, runState, allPool, sentenceRunState, batchNum, config, excludeIds?: Set<string>, hooks?: EngineHooks) → { ctx: SentenceContext; tiles: SentenceTile[] }[]` | Filters sentence contexts by word-seen threshold, active/graduation state, and batch-gap spacing; drops any context referencing an `excludeIds` member (shelved word) since its tile set can no longer satisfy `wordOrder`; groups exclusions by `SentenceExclusionReason` and fires one `hooks.onSentenceExcluded(ids, reason)` per reason bucket |
 | `updateSentenceRunState` | `(sentenceRunState, results, batchNum, config) → SentenceRunState` | Applies a batch of sentence results — streak tracking, graduation/shelving via `active` flag |
 
 ---
@@ -120,10 +120,10 @@ no side effects.
 
 | Export | Signature | Purpose |
 | --- | --- | --- |
-| `validateBatch` | `(questions: QuizQuestion[], constraints?: BatchConstraints) → BatchValidation` | Pure, non-throwing predicate over a finished batch. Rule 1: no `excludeIds` member appears as a word question or sentence tile. Rule 2: no duplicate question identity (`kind:subject:direction`) |
+| `validateBatch` | `(questions: QuizQuestion[], constraints?: BatchConstraints) → BatchValidation` | Pure, non-throwing predicate over a finished batch. Rule 1: no `excludeIds` member appears as a word question or sentence tile. Rule 2: no duplicate question identity (`kind:subject:direction`). Rule 3: no MCQ has an empty `choices` array |
 | `BatchConstraints` | `interface` | `{ excludeIds?: Set<string> }` |
 | `BatchValidation` | `interface` | `{ valid: boolean; violations: BatchViolation[] }` |
-| `BatchViolation` | `type` | `{ kind: 'excluded-word', ... } \| { kind: 'duplicate-question', ... }` |
+| `BatchViolation` | `type` | `{ kind: 'excluded-word', ... } \| { kind: 'duplicate-question', ... } \| { kind: 'empty-choices', questionIndex, wordId }` |
 
 ---
 
@@ -138,6 +138,7 @@ no side effects.
 | `SentenceRunState`, `SentenceState` | `../types/sentence-state.js` |
 | `shuffle` | `../utils/shuffle.js` |
 | `LANGUAGE_CONFIG` | `../../config/language.js` |
+| `EngineHooks`, `SentenceExclusionReason` | `../types/hooks.js` — accepted as an optional trailing param by `compose-word-batch.ts`, `assemble-batch.ts`, `batch-queue.ts`, `sentence-scheduling.ts`, and `session.ts` (EP28 observability) |
 
 ---
 

@@ -50,6 +50,7 @@ describe('initAdaptiveSession', () => {
       maxMastery: 2,
     },
     maxRetryPerSession: 5,
+    maxRecheckRatio: 1,
   };
 
   it('partitions recheck IDs into active and fills the rest from words', () => {
@@ -112,17 +113,19 @@ describe('initAdaptiveSession', () => {
     expect(state.queue.map((w) => w.id)).toEqual(['w1', 'w4']);
   });
 
-  it('recheck items alone exceeding wordsPerBatch still all enter active, unclamped', () => {
+  it('recheck items alone exceeding wordsPerBatch are capped by maxRecheckRatio, overflow queues first', () => {
     const recheckIds = new Set(['w1', 'w2', 'w3']);
     const state = initAdaptiveSession(
       mockWords,
-      { ...config, wordsPerBatch: 2 },
+      { ...config, wordsPerBatch: 2, maxRecheckRatio: 0.4 },
       recheckIds,
     );
 
-    expect(state.active.map((w) => w.id)).toEqual(['w1', 'w2', 'w3']);
-    expect(state.active.length).toBeGreaterThan(config.wordsPerBatch);
-    expect(state.queue.map((w) => w.id)).toEqual(['w4']);
+    // ceil(2 * 0.4) = 1 recheck slot; the other active slot fills from otherItems (w4).
+    expect(state.active.map((w) => w.id)).toEqual(['w1', 'w4']);
+    expect(state.active.length).toBeLessThanOrEqual(2);
+    // Overflow rechecks (w2, w3) queue ahead of any remaining non-recheck words.
+    expect(state.queue.map((w) => w.id)).toEqual(['w2', 'w3']);
   });
 });
 
@@ -163,6 +166,7 @@ describe('advanceAdaptiveSession', () => {
       maxMastery: 1,
     },
     maxRetryPerSession: 5,
+    maxRecheckRatio: 1,
   };
 
   it('updates mastery, moves pool, and increments batchNum', () => {

@@ -4,7 +4,40 @@ import type { SentenceQuizResult } from '../types/quiz.js';
 import type { RunState } from '../types/word-state.js';
 import type { QuizItem } from './compose-word-batch.js';
 import type { SentenceTile } from '../types/quiz.js';
+import type { EngineHooks, SentenceExclusionReason } from '../types/hooks.js';
 import { defaultSentenceState } from '../types/sentence-state.js';
+
+/**
+ * Gates a single context against the seen/active/cooldown rules, in order.
+ * Returns the reason it was excluded, or null when it passes all three.
+ * @example
+ * ctx not yet seen enough  -> 'word-not-seen-enough'
+ * ctx active, no cooldown  -> null
+ */
+function getGateExclusionReason(
+  ctx: SentenceContext,
+  runState: RunState,
+  sentenceRunState: SentenceRunState,
+  batchNum: number,
+  config: { minSeenForSentence: number; sentenceBatchGap: number },
+): SentenceExclusionReason | null {
+  const wordSeenPass = ctx.wordOrder.every(
+    (id) => (runState.get(id)?.seen ?? 0) >= config.minSeenForSentence,
+  );
+  if (!wordSeenPass) return 'word-not-seen-enough';
+
+  const sState =
+    sentenceRunState.get(ctx.sentenceId) ?? defaultSentenceState(ctx.sentenceId);
+
+  if (!sState.active) return 'sentence-inactive';
+
+  if (sState.lastBatchSeen !== -1) {
+    const gap = batchNum - sState.lastBatchSeen;
+    if (gap <= config.sentenceBatchGap) return 'batch-gap-cooldown';
+  }
+
+  return null;
+}
 
 export function resolveEligibleContexts(
   corpus: SentenceContext[],
@@ -14,6 +47,7 @@ export function resolveEligibleContexts(
   batchNum: number,
   config: { minSeenForSentence: number; sentenceBatchGap: number },
   excludeIds?: Set<string>,
+  hooks?: EngineHooks,
 ): { ctx: SentenceContext; tiles: SentenceTile[] }[] {
   const poolMap = new Map(
     allPool
@@ -21,25 +55,23 @@ export function resolveEligibleContexts(
       .map((w) => [w.id, w]),
   );
 
-  return corpus
-    .filter((ctx) => {
-      const wordSeenPass = ctx.wordOrder.every(
-        (id) => (runState.get(id)?.seen ?? 0) >= config.minSeenForSentence,
-      );
-      if (!wordSeenPass) return false;
+  const excludedByReason = new Map<SentenceExclusionReason, string[]>();
+  const recordExclusion = (sentenceId: string, reason: SentenceExclusionReason): void => {
+    const ids = excludedByReason.get(reason) ?? [];
+    ids.push(sentenceId);
+    excludedByReason.set(reason, ids);
+  };
 
-      const sState =
-        sentenceRunState.get(ctx.sentenceId) ?? defaultSentenceState(ctx.sentenceId);
+  const gated = corpus.filter((ctx) => {
+    const reason = getGateExclusionReason(ctx, runState, sentenceRunState, batchNum, config);
+    if (reason) {
+      recordExclusion(ctx.sentenceId, reason);
+      return false;
+    }
+    return true;
+  });
 
-      if (!sState.active) return false;
-
-      if (sState.lastBatchSeen !== -1) {
-        const gap = batchNum - sState.lastBatchSeen;
-        if (gap <= config.sentenceBatchGap) return false;
-      }
-
-      return true;
-    })
+  const eligible = gated
     .map((ctx) => {
       const tiles: SentenceTile[] = ctx.wordOrder.flatMap((id) => {
         const item = poolMap.get(id);
@@ -48,7 +80,17 @@ export function resolveEligibleContexts(
       });
       return { ctx, tiles };
     })
-    .filter(({ ctx: c, tiles }) => tiles.length === c.wordOrder.length);
+    .filter(({ ctx: c, tiles }) => {
+      const passes = tiles.length === c.wordOrder.length;
+      if (!passes) recordExclusion(c.sentenceId, 'missing-pool-item');
+      return passes;
+    });
+
+  for (const [reason, ids] of excludedByReason) {
+    hooks?.onSentenceExcluded?.(ids, reason);
+  }
+
+  return eligible;
 }
 
 export function updateSentenceRunState(

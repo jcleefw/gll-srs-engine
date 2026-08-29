@@ -51,7 +51,7 @@ Foundational items also get different question directions (`FOUNDATIONAL_DIRECTI
 |---|---|
 | `seen` | Total times the word was presented |
 | `correct` | Total correct answers |
-| `mastery` | Integer 0–5 — the only field that controls retirement |
+| `mastery` | Integer, clamped to a configurable ceiling (`StreakThresholds.maxMastery`) — the only field that controls retirement |
 | `correctStreak` | Consecutive correct answers |
 | `wrongStreak` | Consecutive wrong answers |
 

@@ -114,6 +114,7 @@ export async function runAdaptiveLoop(
     masteryThreshold,
     streakThresholds,
     maxRetryPerSession,
+    maxRecheckRatio: 0.4,
   };
 
   const snapshotRunState = new Map(initialRunState);

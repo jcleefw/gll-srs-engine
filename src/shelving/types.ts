@@ -1,6 +1,6 @@
 export interface ShelvingConfig {
   stagnationBatchWindow: number; // number of consecutive batches with no mastery progress before shelving
-  maxShelved: number;            // max words that can be shelved simultaneously
+  maxShelved: number; // max words that can be shelved simultaneously
 }
 
 export const DEFAULT_SHELVING_CONFIG: ShelvingConfig = {
@@ -14,6 +14,11 @@ export interface ShelvedWord {
 }
 
 export interface ShelvingDecision {
-  toShelve: string[];   // word IDs to shelve
+  toShelve: string[]; // word IDs to shelve
   toUnshelve: string[]; // word IDs to unshelve
+}
+
+export interface ShelvingHooks {
+  /** A word (or words) was shelved, with why. */
+  onShelved?: (ids: string[], reason: string) => void;
 }

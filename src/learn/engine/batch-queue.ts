@@ -1,4 +1,5 @@
 import { type QuizQuestion, type QuizResult } from '../types/quiz.js';
+import { type EngineHooks } from '../types/hooks.js';
 
 /**
  * Output of a completed batch, containing results and updated retry tracking.
@@ -100,6 +101,7 @@ export function nextQuestion(state: BatchState): {
 export function submitBatchResult(
   state: BatchState,
   result: QuizResult,
+  hooks?: EngineHooks,
 ): BatchState {
   const nextResults = [...state.results, result];
   const nextQueue = [...state.queue];
@@ -124,7 +126,14 @@ export function submitBatchResult(
       if (cached) {
         nextBatchRetryCounts.set(id, batchRetries + 1);
         nextQueue.push(cached);
+        hooks?.onRetryDecision?.(id, runningSessionRetries, state.retryPerSessionCap, 'retry');
+      } else {
+        // Cache miss: retry was allowed by both caps but there's no cached
+        // question to re-serve, so the retry is silently dropped.
+        hooks?.onRetryDecision?.(id, runningSessionRetries, state.retryPerSessionCap, 'drop');
       }
+    } else {
+      hooks?.onRetryDecision?.(id, runningSessionRetries, state.retryPerSessionCap, 'drop');
     }
   }
 

@@ -23,6 +23,16 @@ export type { BatchConstraints, BatchValidation, BatchViolation } from './engine
 export { updateRunState, isMastered } from './types/word-state.js';
 export type { WordState, RunState, StreakThresholds, GraduationHook } from './types/word-state.js';
 
+// Hooks
+export type {
+  IdSetHook,
+  TransitionHook,
+  CapDecisionHook,
+  DistributionHook,
+  EngineHooks,
+  SentenceExclusionReason,
+} from './types/hooks.js';
+
 // Sentence state
 export { defaultSentenceState } from './types/sentence-state.js';
 export type { SentenceState, SentenceRunState } from './types/sentence-state.js';

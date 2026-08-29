@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import type { ShelvingConfig } from '../types.js';
 import { evaluateShelving, unshelveAll } from '../policy.js';
 
@@ -75,6 +75,52 @@ describe('evaluateShelving', () => {
     const result = evaluateShelving(['a', 'b'], new Set(), zeroConfig);
     expect(result.toShelve).toEqual([]);
     expect(result.toUnshelve).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// evaluateShelving — ShelvingHooks.onShelved
+// ---------------------------------------------------------------------------
+
+describe('evaluateShelving — onShelved hook', () => {
+  it('emits one call for shelved words with reason "stagnant"', () => {
+    const onShelved = vi.fn();
+    evaluateShelving(['a', 'b'], new Set(), config, { onShelved });
+    expect(onShelved).toHaveBeenCalledWith(['a', 'b'], 'stagnant');
+  });
+
+  it('emits a second call for overflow candidates with reason "cap-reached"', () => {
+    const onShelved = vi.fn();
+    evaluateShelving(['a', 'b', 'c'], new Set(), config, { onShelved });
+    expect(onShelved).toHaveBeenCalledTimes(2);
+    expect(onShelved).toHaveBeenCalledWith(['a', 'b'], 'stagnant');
+    expect(onShelved).toHaveBeenCalledWith(['c'], 'cap-reached');
+  });
+
+  it('cap already reached (0 available slots) → early-return path, hook never fires', () => {
+    const onShelved = vi.fn();
+    evaluateShelving(['a', 'b'], new Set(['x', 'y']), config, { onShelved });
+    expect(onShelved).not.toHaveBeenCalled();
+  });
+
+  it('partial fill with leftover overflow → both "stagnant" and "cap-reached" fire', () => {
+    const onShelved = vi.fn();
+    evaluateShelving(['a', 'b'], new Set(['x']), config, { onShelved });
+    expect(onShelved).toHaveBeenCalledTimes(2);
+    expect(onShelved).toHaveBeenCalledWith(['a'], 'stagnant');
+    expect(onShelved).toHaveBeenCalledWith(['b'], 'cap-reached');
+  });
+
+  it('nothing stagnant → hook never fires', () => {
+    const onShelved = vi.fn();
+    evaluateShelving([], new Set(), config, { onShelved });
+    expect(onShelved).not.toHaveBeenCalled();
+  });
+
+  it('decision output is unchanged whether or not hooks are supplied', () => {
+    const withHooks = evaluateShelving(['a', 'b', 'c'], new Set(), config, { onShelved: vi.fn() });
+    const withoutHooks = evaluateShelving(['a', 'b', 'c'], new Set(), config);
+    expect(withHooks).toEqual(withoutHooks);
   });
 });
 

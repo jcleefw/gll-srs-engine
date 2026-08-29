@@ -1,6 +1,7 @@
 import type { MockWord } from '../../../data/mock/mock-words.js';
 import type { QuizChoice, QuizDirection, MCQQuestion } from '../types/quiz.js';
 import type { MockFoundational } from '../types/foundational.js';
+import type { EngineHooks } from '../types/hooks.js';
 import { shuffle } from '../utils/shuffle.js';
 
 export type QuizItem = MockFoundational | MockWord;
@@ -58,6 +59,7 @@ export function composeWordBatchMulti(
   words: QuizItem[],
   pool: QuizItem[],
   options: { questionLimit: number; shuffle?: boolean; rng?: () => number },
+  hooks?: EngineHooks,
 ): MCQQuestion[] {
   const { questionLimit, shuffle: shouldShuffle = true, rng } = options;
 
@@ -102,6 +104,14 @@ export function composeWordBatchMulti(
    * shuffled   = [B1,A3,B3,C4,B2,A2]
    */
   const batch = [...coverage, ...filler];
+
+  if (words.length > 0) {
+    hooks?.onWordBatchComposed?.(questionLimit, {
+      coverage: coverage.length,
+      filler: filler.length,
+    });
+  }
+
   return shouldShuffle ? shuffle(batch, rng) : batch;
 }
 

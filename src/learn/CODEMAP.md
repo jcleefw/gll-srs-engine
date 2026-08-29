@@ -38,6 +38,7 @@ scheduling. Navigate to subfolder CODEMAPs for implementation detail.
 | `./engine/assemble-batch.js` | `assembleBatch`, type `AssembleBatchOptions` |
 | `./engine/validate-batch.js` | `validateBatch`, types `BatchConstraints`, `BatchValidation`, `BatchViolation` |
 | `./types/word-state.js` | `updateRunState`, `isMastered`, types `WordState`, `RunState`, `StreakThresholds`, `GraduationHook` |
+| `./types/hooks.js` | types `IdSetHook`, `TransitionHook`, `CapDecisionHook`, `DistributionHook`, `EngineHooks`, `SentenceExclusionReason` |
 | `./types/sentence-state.js` | `defaultSentenceState`, types `SentenceState`, `SentenceRunState` |
 | `./engine/sentence-scheduling.js` | `resolveEligibleContexts`, `updateSentenceRunState` |
 | `./types/quiz.js` | types `QuizQuestion`, `MCQQuestion`, `SentenceQuestion`, `SentenceTile`, `QuizChoice`, `QuizDirection`, `QuizResult`, `WordQuizResult`, `SentenceQuizResult` |
