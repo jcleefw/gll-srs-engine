@@ -62,12 +62,24 @@ export function initAdaptiveSession(
 import { updateMasteryState, nextActivePool } from './session.js';
 import type { WordQuizResult } from '../types/quiz.js';
 
+/**
+ * Applies a scored batch's results to the session: updates mastery and
+ * recheck tracking, recomputes the active/queue pools, and merges retry counts.
+ *
+ * Runs after each batch of quiz answers is scored
+ * Based on current session state, plus batch results, produces next session state.
+ *
+ * @param state Session state prior to this batch.
+ * @param batchOutput Scored results from the batch just completed.
+ * @param config Session tuning (batch size, mastery threshold, retry caps).
+ * @returns The updated session state.
+ */
 export function advanceAdaptiveSession(
   state: AdaptiveSessionState,
   batchOutput: BatchOutput,
   config: SessionConfig,
 ): AdaptiveSessionState {
-  // Filter mixed results to word results only (Phase 2)
+  // Filter down to word results only, remove sentence results
   const wordResults = batchOutput.results.filter(
     (r): r is WordQuizResult => 'wordId' in r,
   );
@@ -81,18 +93,34 @@ export function advanceAdaptiveSession(
     config.streakThresholds,
   );
 
+  // recomputes active/queue pools
   const { active, queue } = nextActivePool(
     state.active,
     state.queue,
     config.wordsPerBatch,
     runState,
     config.masteryThreshold,
-    new Set([...recheckPending, ...recheckReentered]), // both recheck stages exempt from retirement
+    // both recheck stages exempt from retirement
+    new Set([...recheckPending, ...recheckReentered]),
   );
 
-  // finishBatch pre-accumulates prior session totals into batchOutput.sessionRetryCounts,
-  // so .set() is correct here — additive merge would double-count
+  // Copy the old totals map
   const nextSessionRetryCounts = new Map(state.sessionRetryCounts);
+
+  /**
+   * for each id in the new batch's totals, overwrite that id's entry in the copy.
+   *
+   * @example
+   * old state: { word-a: 2, word-b: 5}
+   * new state this batch: { word-b: 6, word-c: 1 }
+   *
+   * next batch starting state (after merging):
+   * {
+   *   word-a: 2,   ← untouched, only in old
+   *   word-b: 6,   ← new value wins, old 5 discarded
+   *   word-c: 1,   ← added, only in new
+   * }
+   */
   for (const [id, count] of batchOutput.sessionRetryCounts) {
     nextSessionRetryCounts.set(id, count);
   }
@@ -101,7 +129,9 @@ export function advanceAdaptiveSession(
   // correct-streak threshold gets its retry budget wiped, so a later cold
   // streak doesn't inherit debt from an earlier hot streak.
   for (const [id, wordState] of runState) {
-    if (wordState.correctStreak >= config.streakThresholds.correctStreakThreshold) {
+    if (
+      wordState.correctStreak >= config.streakThresholds.correctStreakThreshold
+    ) {
       nextSessionRetryCounts.delete(id);
     }
   }
