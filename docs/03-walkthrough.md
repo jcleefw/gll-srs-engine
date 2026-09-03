@@ -252,7 +252,7 @@ SentenceContext {
 }
 ```
 
-For w2 to trigger a sentence question, it needs `seen >= minSeenForSentence` (default: 2). After Batch 5, w2 has `seen >= 5`, so it's eligible.
+For w2 to trigger a sentence question, it needs `seen >= minSeenForSentence` — a caller-supplied config value, not a fixed engine default (this walkthrough uses 2 for illustration; check the host's config for the value actually in effect). After Batch 5, w2 has `seen >= 5`, so it's eligible.
 
 `resolveEligibleContexts` filters the sentence corpus:
 - Check: all words in `wordOrder` have `seen >= 2`? ✓ w2 qualifies
@@ -308,8 +308,8 @@ w3 and sent re-serve in the same batch (up to `maxRetryPerWord` and `maxRetryPer
 
 **Key difference from word questions:**
 - Sentence results do NOT affect `WordState.mastery`
-- Sentence state has its own streak: `sentenceCorrectStreakThreshold` (default: 3) correct answers → `active=false` (shelved)
-- Sentence state also tracks `sessionWrongStreakThreshold` (default: 3) wrong answers → `active=false` (shelved)
+- Sentence state has its own streak: `sentenceCorrectStreakThreshold` correct answers → `active=false` (shelved) — a caller-supplied config value, not a fixed engine default
+- Sentence state also tracks `sentenceWrongStreakThreshold` wrong answers → `active=false` (shelved) — also caller-supplied config (corrected field name; the engine does not have a `sessionWrongStreakThreshold`)
 - Shelved sentences do not re-queue, even if wrong answers remain
 - Spacing rule: sentence not served in back-to-back batches (`lastBatchSeen` checked against current `batchNum`)
 
@@ -394,7 +394,7 @@ Without this reset, a word that struggled early in a long session would stay ret
 - **No state crossover**: a sentence answer never changes `WordState`; word answers never change `SentenceRunState`
 - **Shelving**: sentence marked `active=false` if it accumulates 3 wrong answers in a session, or 3 correct answers (exits)
 - **Spacing**: a sentence cannot appear in back-to-back batches (`batchNum - lastBatchSeen` must be ≥ 1)
-- **Retirement**: after correct streak reaches threshold (default: 3), the sentence moves to FSRS review (`src/review/`)
+- **Retirement**: after correct streak reaches `sentenceCorrectStreakThreshold` (a caller-supplied config value, not a fixed engine default), the sentence moves to FSRS review (`src/review/`)
 
 ### Terminal condition
 

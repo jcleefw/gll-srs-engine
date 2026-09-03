@@ -70,7 +70,7 @@ The rule (`updateRunState` in `src/learn/types/word-state.ts`):
 
 Crucially: **streaks are never reset after a mastery change**. If a streak hits the threshold and bumps mastery, the streak continues accumulating. This lets a well-known word climb quickly and lets a shaky word fall quickly — without artificial dampening.
 
-Retirement check: `ws.mastery >= masteryThreshold` (default: 5).
+Retirement check: `ws.mastery >= masteryThreshold`. `masteryThreshold` is a caller-supplied config value, not an engine-level default — the value actually in effect is whatever the host configures (e.g. `apps/server`'s `FIXED_SYSTEM.masteryThreshold`).
 
 ---
 
@@ -105,7 +105,7 @@ Distractors are drawn from the **full word pool**, not just the active pool — 
 
 **`composeSentenceBatch`** — generates word-block construction questions from a `SentenceContext`.
 
-A sentence becomes eligible when all its words have `WordState.seen >= minSeenForSentence` (default: 2). Mastery is not required. The composer produces 3 directions:
+A sentence becomes eligible when all its words have `WordState.seen >= minSeenForSentence`. `minSeenForSentence` is a caller-supplied config value (e.g. `apps/server`'s `FIXED_SYSTEM.sentenceScheduling.minSeenForSentence`), not a fixed engine default. Mastery is not required. The composer produces 3 directions:
 - english-to-native (arrange tiles to match English prompt)
 - native-to-english (arrange tiles to match native prompt)
 - romanization-to-native (arrange tiles to match romanized prompt)
