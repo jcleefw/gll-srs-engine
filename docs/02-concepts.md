@@ -132,8 +132,8 @@ initAdaptiveSession(words, config, sentenceContexts)
 Per batch:
   assembleBatch(active, wordPool, foundationalPool, wordsPerBatch, {
     extraThunks: [
-      () => composeSentenceBatch(ctx1, tiles1),
-      () => composeSentenceBatch(ctx2, tiles2),
+      (excludeIds) => composeSentenceBatch(ctx1, tiles1.filter((t) => !excludeIds?.has(t.wordId))),
+      (excludeIds) => composeSentenceBatch(ctx2, tiles2.filter((t) => !excludeIds?.has(t.wordId))),
       ...
     ]
   }) → QuizQuestion[]
@@ -161,6 +161,9 @@ Repeat until active.length === 0 && queue.length === 0
 - Wrong answers of either kind re-queue within the batch (subject to per-word, per-session caps)
 - Sentence results do not affect `WordState.mastery` — they update `SentenceRunState` only
 - Sentence eligibility is checked per batch; eligible sentences are passed as `extraThunks` to assembly
+- `extraThunks` receive the active `excludeIds` on every call, including a self-heal retry with a widened set — each thunk is responsible for filtering its own tiles rather than reproducing a leak on retry
+
+**Self-healing on exclusion leaks**: `assembleBatch` validates its own output (`validateBatch`) before returning. If an excluded word leaked into the batch, it retries once with the leaked id folded into `excludeIds`. Any violation still present after that — of any kind — is dropped from the returned batch rather than shipped to the caller.
 
 ---
 

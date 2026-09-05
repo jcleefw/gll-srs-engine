@@ -76,14 +76,28 @@ would. See [CODEMAP](demo/CODEMAP.md) for file-level detail.
 
 ---
 
-## Config Files
+## `test-support/` — Shared Test Infrastructure
+
+Driving harness and fixtures shared by `demo/` and the test suite (auto-answer
+strategies, adaptive-loop runner, seeded RNG). Not a subpath export.
+
+---
+
+## Config & Meta Files
 
 | File | Purpose |
 | --- | --- |
-| `package.json` | ESM package, no root export (subpath-only), declares `ts-fsrs` dep, build/test/lint/typecheck scripts + `engine:mock-db` demo runner |
+| `package.json` | ESM package, no root export (subpath-only), declares `ts-fsrs` dep, build/test/lint/typecheck scripts + `engine:mock-db` demo runner + `test:mutation` |
 | `tsconfig.json` | Base TS config (no emit), includes `src/`, `__tests__/`, `demo/`, `data/` |
 | `tsconfig.build.json` | Build config — compiles `src/` + `data/` → `dist/` |
 | `vitest.config.ts` | Discovers tests across `src/**/__tests__/`, `data/**/__tests__/`, `__tests__/integration/` |
+| `stryker.config.json` | Mutation testing config (`test:mutation` script) — mutates `src/**/*.ts`, excludes `__tests__/`, barrel `index.ts` files, and `src/config/language.ts` |
+| `README.md` | Package-level readme — quickstart and overview |
+| `RULES.md` | Constraints for this package: pure engine only, no persistence/I/O, no `@gll/db` import, empty runtime `dependencies` |
+| `KNOWLEDGE.md` | Approved-edits-only domain knowledge digest (session lifecycle, mastery tracking, batch composition/validation, foundational content) |
+| `CHANGELOG.md` | Human-readable feature changelog, entries per epic/story |
+| `MUTATION-LOG.md` | Durable trend log of `pnpm --filter @gll/srs-engine test:mutation` runs (score, killed/timeout/survived counts) — the `reports/mutation/` HTML/JSON output itself is gitignored |
+| `reports/mutation/` | Gitignored Stryker mutation-testing output (`index.html`, `mutation.json`) — disposable, `MUTATION-LOG.md` is the durable record |
 
 ---
 

@@ -10,14 +10,14 @@ no side effects.
 | File | Purpose |
 | --- | --- |
 | `adaptive-session.ts` | Top-level session orchestration across batches |
-| `assemble-batch.ts` | Partitions active items into foundational vs. vocabulary, proportionally splits question-limit, wires the composer registry |
+| `assemble-batch.ts` | Partitions active items into foundational vs. vocabulary, proportionally splits question-limit, wires the composer registry, then self-heals the result against `validateBatch` |
 | `batch-queue.ts` | Per-batch question serving/retry state machine |
 | `compose-registry.ts` | Thunk-based registry pattern for merging question sources |
 | `compose-sentence-batch.ts` | Builds sentence questions from a resolved context |
 | `compose-word-batch.ts` | MCQ question generation for a single foundational/vocabulary item |
 | `sentence-scheduling.ts` | Sentence context eligibility gating and streak/shelving state updates |
 | `session.ts` | Recheck, pool rotation, mastery update logic |
-| `validate-batch.ts` | Pure post-composition integrity checker for a finished batch — safety net, not a repair mechanism |
+| `validate-batch.ts` | Pure post-composition integrity checker for a finished batch — safety net, not a repair mechanism; `assemble-batch.ts` is what acts on its output |
 
 ---
 
@@ -45,8 +45,8 @@ no side effects.
 
 | Export | Signature | Purpose |
 | --- | --- | --- |
-| `assembleBatch` | `(active: QuizItem[], wordPool: QuizItem[], foundationalPool: QuizItem[], wordsPerBatch: number, options?: AssembleBatchOptions, hooks?: EngineHooks) → QuizQuestion[]` | Orchestrates batch assembly: filters `excludeIds`, splits `active` into foundational vs. vocabulary, proportionally divides `wordsPerBatch` between them, composes each via the registry, optionally shuffles the merged result; fires `hooks.onBatchAssembled(eligible.length, { foundational, vocabulary })` and forwards `hooks` into each `composeWordBatchItems` thunk |
-| `AssembleBatchOptions` | `interface` | `{ shuffle?: boolean (default true); extraThunks?: (() => QuizQuestion[])[]; excludeIds?: Set<string> }` |
+| `assembleBatch` | `(active: QuizItem[], wordPool: QuizItem[], foundationalPool: QuizItem[], wordsPerBatch: number, options?: AssembleBatchOptions, hooks?: EngineHooks) → QuizQuestion[]` | Orchestrates batch assembly: filters `excludeIds`, splits `active` into foundational vs. vocabulary, proportionally divides `wordsPerBatch` between them, composes each via the registry, runs each `extraThunks` entry with the active `excludeIds`; fires `hooks.onBatchAssembled(eligible.length, { foundational, vocabulary })` and forwards `hooks` into each `composeWordBatchItems` thunk. Self-heals before returning: runs `validateBatch` on the composed questions; if an excluded word leaked in, recomposes once with the leaked id(s) folded into `excludeIds`; any violation still present after that (of any kind) is dropped by filtering out the offending question indices. Shuffles the surviving questions when `shuffle` is true |
+| `AssembleBatchOptions` | `interface` | `{ shuffle?: boolean (default true); extraThunks?: ((excludeIds?: Set<string>) => QuizQuestion[])[]; excludeIds?: Set<string> }` — each `extraThunks` entry receives the active `excludeIds` on every call, including the self-heal retry, so it can filter its own output rather than reproduce a leak |
 
 ---
 
