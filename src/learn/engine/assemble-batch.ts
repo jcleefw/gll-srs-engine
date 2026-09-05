@@ -6,12 +6,17 @@ import { composeWordBatchItems, type QuizItem } from './compose-word-batch.js';
 import { type QuizQuestion } from '../types/quiz.js';
 import { type EngineHooks } from '../types/hooks.js';
 import { shuffle as shuffleArray } from '../utils/shuffle.js';
+import { validateBatch, type BatchViolation } from './validate-batch.js';
 
 export interface AssembleBatchOptions {
   /** If true, the final batch of questions will be shuffled. Defaults to true. */
   shuffle?: boolean;
-  /** Optional array of additional thunks (e.g. for sentences) to include in the batch. */
-  extraThunks?: (() => QuizQuestion[])[];
+  /**
+   * Optional array of additional thunks (e.g. for sentences) to include in the batch.
+   * Receives the active excludeIds so a retry with a widened set can actually
+   * filter out the leak, instead of reproducing the same output.
+   */
+  extraThunks?: ((excludeIds?: Set<string>) => QuizQuestion[])[];
   /** Optional set of item IDs to exclude from question generation. */
   excludeIds?: Set<string>;
 }
@@ -30,6 +35,57 @@ export function assembleBatch(
 ): QuizQuestion[] {
   const { shuffle = true, extraThunks = [], excludeIds } = options;
 
+  let questions = composeQuestions(
+    active,
+    wordPool,
+    foundationalPool,
+    wordsPerBatch,
+    excludeIds,
+    extraThunks,
+    hooks,
+  );
+
+  let validation = validateBatch(questions, { excludeIds });
+
+  if (!validation.valid) {
+    const leaked = validation.violations
+      .filter((v): v is Extract<BatchViolation, { kind: 'excluded-word' }> => v.kind === 'excluded-word')
+      .map((v) => v.wordId);
+
+    if (leaked.length > 0) {
+      const widenedExcludeIds = new Set([...(excludeIds ?? []), ...leaked]);
+      questions = composeQuestions(
+        active,
+        wordPool,
+        foundationalPool,
+        wordsPerBatch,
+        widenedExcludeIds,
+        extraThunks,
+        hooks,
+      );
+      validation = validateBatch(questions, { excludeIds: widenedExcludeIds });
+    }
+
+    if (!validation.valid) {
+      const droppedIndices = new Set(
+        validation.violations.map((v) => v.questionIndex),
+      );
+      questions = questions.filter((_, index) => !droppedIndices.has(index));
+    }
+  }
+
+  return shuffle ? shuffleArray(questions) : questions;
+}
+
+function composeQuestions(
+  active: QuizItem[],
+  wordPool: QuizItem[],
+  foundationalPool: QuizItem[],
+  wordsPerBatch: number,
+  excludeIds: Set<string> | undefined,
+  extraThunks: ((excludeIds?: Set<string>) => QuizQuestion[])[],
+  hooks?: EngineHooks,
+): QuizQuestion[] {
   const eligible = excludeIds?.size
     ? active.filter((item) => !excludeIds.has(item.id))
     : active;
@@ -83,10 +139,8 @@ export function assembleBatch(
   }
 
   for (const thunk of extraThunks) {
-    registry.add(thunk);
+    registry.add(() => thunk(excludeIds));
   }
 
-  const questions = assembleBatchQuestions(registry);
-
-  return shuffle ? shuffleArray(questions) : questions;
+  return assembleBatchQuestions(registry);
 }

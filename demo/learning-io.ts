@@ -251,8 +251,13 @@ async function runBatch(
   const allPool = [...wordPool, ...foundationalPool];
   const extraThunks = resolveEligibleContexts(mockCorpus, state.runState, allPool, sentenceRunState, batchNum, LEARNING_CONFIG).map(
     ({ ctx, tiles }) =>
-      () =>
-        composeSentenceBatch(ctx, tiles, 'th', { shuffle: !strategy }),
+      (retryExcludeIds?: Set<string>) => {
+        const eligibleTiles = retryExcludeIds?.size
+          ? tiles.filter((t) => !retryExcludeIds.has(t.wordId))
+          : tiles;
+        if (eligibleTiles.length !== tiles.length) return [];
+        return composeSentenceBatch(ctx, eligibleTiles, 'th', { shuffle: !strategy });
+      },
   );
 
   const questions = assembleBatch(

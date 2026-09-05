@@ -91,6 +91,10 @@ Both sets are union'd when calling `nextActivePool`: `new Set([...recheckPending
 
 ## Question composition: words and sentences
 
+**Terminology** — "sentence question" and "sentence quiz" are not interchangeable:
+- **Sentence question**: one question, tiles = the words of a sentence, answer = correct word order (`composeSentenceBatch`, `kind: 'word-block'`). This is what the engine implements today.
+- **Sentence quiz**: multiple ordinary word questions batched together because they're scoped to one sentence's vocabulary. Not implemented in the engine — do not conflate with the sentence question path above.
+
 The engine has two sibling composers:
 
 **`composeWordBatch`** — generates one question per direction for a single item.  

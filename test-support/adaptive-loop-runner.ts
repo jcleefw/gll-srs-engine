@@ -59,8 +59,13 @@ function runBatch(
     sentenceConfig,
   ).map(
     ({ ctx, tiles }) =>
-      () =>
-        composeSentenceBatch(ctx, tiles, 'th', { shuffle: false }),
+      (retryExcludeIds?: Set<string>) => {
+        const eligibleTiles = retryExcludeIds?.size
+          ? tiles.filter((t) => !retryExcludeIds.has(t.wordId))
+          : tiles;
+        if (eligibleTiles.length !== tiles.length) return [];
+        return composeSentenceBatch(ctx, eligibleTiles, 'th', { shuffle: false });
+      },
   );
 
   const questions = assembleBatch(

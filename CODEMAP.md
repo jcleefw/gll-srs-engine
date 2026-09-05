@@ -37,6 +37,7 @@ consumer imports a subpath):
 | `docs/02-concepts.md` | Developers, architects | Architecture, core concepts, design decisions | ″ |
 | `docs/03-walkthrough.md` | Builders, debuggers | Step-by-step algorithm trace with worked example | ″ |
 | `docs/04-deferred-features.md` | Planners | Gap analysis vs PRD | ″ |
+| `docs/05-data-pipeline.md` | Developers | Conversation JSON → ingestion → DB → engine inputs | ″ |
 
 ---
 

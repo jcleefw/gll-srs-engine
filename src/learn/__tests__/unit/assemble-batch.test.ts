@@ -66,7 +66,7 @@ describe('assembleBatch', () => {
         wordId: 'extra-word',
         direction: 'native-to-english',
         prompt: 'prompt',
-        choices: [],
+        choices: [{ label: 'a', value: 'extra-word', isCorrect: true }],
       } as QuizQuestion,
     ]);
 
