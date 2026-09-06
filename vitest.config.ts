@@ -8,6 +8,7 @@ export default defineConfig({
       '__tests__/integration/**/*.test.ts',
     ],
     globals: true,
+    setupFiles: ['__tests__/setup.ts'],
     passWithNoTests: true,
   },
 });
