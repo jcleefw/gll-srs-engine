@@ -1,0 +1,66 @@
+{
+  "name": "gll-srs-engine",
+  "version": "0.1.0",
+  "description": "Language-agnostic FSRS-based spaced repetition engine: learning, shelving, and review",
+  "license": "UNLICENSED",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./learn": {
+      "import": "./dist/src/learn/index.js",
+      "types": "./dist/src/learn/index.d.ts"
+    },
+    "./shelving": {
+      "import": "./dist/src/shelving/index.js",
+      "types": "./dist/src/shelving/index.d.ts"
+    },
+    "./review": {
+      "import": "./dist/src/review/index.js",
+      "types": "./dist/src/review/index.d.ts"
+    },
+    "./data/mock/mock-decks": {
+      "import": "./dist/data/mock/mock-decks.js",
+      "types": "./dist/data/mock/mock-decks.d.ts"
+    },
+    "./data/mock/mock-words": {
+      "import": "./dist/data/mock/mock-words.js",
+      "types": "./dist/data/mock/mock-words.d.ts"
+    },
+    "./data/mock/mock-word-pool": {
+      "import": "./dist/data/mock/mock-word-pool.js",
+      "types": "./dist/data/mock/mock-word-pool.d.ts"
+    },
+    "./data/mock/mock-consonants": {
+      "import": "./dist/data/mock/mock-consonants.js",
+      "types": "./dist/data/mock/mock-consonants.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepare": "pnpm run build",
+    "test": "vitest run --exclude \"**/golden/**\"",
+    "test:golden": "vitest run src/learn/__tests__/golden src/review/__tests__/FsrsScheduler.golden.test.ts",
+    "test:property": "vitest run .property.test.ts",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@10.23.0",
+  "dependencies": {
+    "ts-fsrs": "5.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "eslint": "^9",
+    "fast-check": "^4.9.0",
+    "jiti": "^2.6.1",
+    "typescript": "^5.7",
+    "typescript-eslint": "^8",
+    "vitest": "^3"
+  }
+}
