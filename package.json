@@ -46,7 +46,8 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "demo": "tsx demo/learning-runner.ts"
+    "demo": "tsx demo/learning-runner.ts",
+    "test:mutation": "stryker run"
   },
   "engines": {
     "node": ">=20"
@@ -56,6 +57,8 @@
     "ts-fsrs": "5.2.3"
   },
   "devDependencies": {
+    "@stryker-mutator/core": "^10",
+    "@stryker-mutator/vitest-runner": "^10",
     "@types/node": "^25.5.0",
     "eslint": "^9",
     "fast-check": "^4.9.0",
