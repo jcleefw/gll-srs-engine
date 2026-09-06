@@ -1,0 +1,338 @@
+import { describe, it, expect } from 'vitest';
+import { nextActivePool, processRecheckResult, classifyRechecks } from '../../engine/session.js';
+import type { RunState } from '../../types/word-state.js';
+import type { QuizItem } from '../../engine/compose-word-batch.js';
+import type { WordQuizResult } from '../../types/quiz.js';
+
+function makeItem(id: string): QuizItem {
+  return { id, native: id, english: id, romanization: id, type: 'word', language: 'th' };
+}
+
+function makeState(
+  entries: Record<string, { mastery: number; seen?: number; correct?: number }>,
+): RunState {
+  const m: RunState = new Map();
+  for (const [wordId, { mastery, seen = 1, correct = 1 }] of Object.entries(entries)) {
+    m.set(wordId, { wordId, seen, correct, mastery, correctStreak: 0, wrongStreak: 0, lapses: 0 });
+  }
+  return m;
+}
+
+function makeResult(wordId: string, correct: boolean = true): WordQuizResult {
+  return { wordId, correct };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function masteryThreshold(): number { return 3; }
+
+// ---------------------------------------------------------------------------
+// Cycle 1: nextActivePool recheckExempt
+// ---------------------------------------------------------------------------
+
+describe('nextActivePool — recheckExempt', () => {
+  it('does not retire a mastered word when it is in recheckExempt', () => {
+    const active = [makeItem('w1'), makeItem('w2')];
+    const queue: QuizItem[] = [];
+    const runState = makeState({ w1: { mastery: 3 }, w2: { mastery: 0 } });
+    const recheckExempt = new Set(['w1']);
+
+    const result = nextActivePool(active, queue, 2, runState, 3, recheckExempt);
+
+    // w1 is mastered but exempt — must stay in active
+    expect(result.active.map(i => i.id)).toContain('w1');
+  });
+
+  it('retires a mastered word that is NOT in recheckExempt', () => {
+    const active = [makeItem('w1'), makeItem('w2')];
+    const queue: QuizItem[] = [];
+    const runState = makeState({ w1: { mastery: 3 }, w2: { mastery: 0 } });
+    const recheckExempt = new Set<string>(); // w1 not exempt
+
+    const result = nextActivePool(active, queue, 2, runState, 3, recheckExempt);
+
+    expect(result.active.map(i => i.id)).not.toContain('w1');
+  });
+
+  it('omitting recheckExempt behaves identically to current behaviour', () => {
+    const active = [makeItem('w1')];
+    const queue = [makeItem('w2')];
+    const runState = makeState({ w1: { mastery: 3 } });
+
+    const result = nextActivePool(active, queue, 2, runState, 3);
+
+    expect(result.active.map(i => i.id)).toEqual(['w2']);
+    expect(result.queue).toHaveLength(0);
+  });
+
+  it('does not pull queue items into active when active is already at or over wordsPerBatch', () => {
+    // Regression: freeSlots going negative (wordsPerBatch < remaining active count)
+    // must add zero items, not slice(0, negativeNumber) worth of the queue.
+    const active = [makeItem('w1')];
+    const queue = [makeItem('q1'), makeItem('q2'), makeItem('q3')];
+    const runState = makeState({ w1: { mastery: 0 }, q1: { mastery: 0 }, q2: { mastery: 0 }, q3: { mastery: 0 } });
+
+    const result = nextActivePool(active, queue, 0, runState, 3);
+
+    expect(result.active.map(i => i.id)).toEqual(['w1']);
+    expect(result.queue.map(i => i.id)).toEqual(['q1', 'q2', 'q3']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Cycles 2–4: processRecheckResult
+// ---------------------------------------------------------------------------
+
+describe('processRecheckResult — correct on first attempt', () => {
+  it('removes word from recheckPending when answered correctly', () => {
+    const runState = makeState({ w1: { mastery: 3 } });
+    const recheckPending = new Set(['w1']);
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.recheckPending.has('w1')).toBe(false);
+  });
+
+  it('does NOT add word to recheckReentered when answered correctly', () => {
+    const runState = makeState({ w1: { mastery: 3 } });
+    const recheckPending = new Set(['w1']);
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.recheckReentered.has('w1')).toBe(false);
+  });
+
+  it('increments seen/correct but keeps mastery unchanged when answered correctly on first attempt', () => {
+    const runState = makeState({ w1: { mastery: 3, seen: 5 } });
+    const recheckPending = new Set(['w1']);
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    // mastery must not change (already mastered)
+    expect(result.runState.get('w1')?.mastery).toBe(3);
+    // seen and correct must increment — attempt was recorded
+    expect(result.runState.get('w1')?.seen).toBe(6);
+    expect(result.runState.get('w1')?.correct).toBe(2);
+    // streaks must not change
+    expect(result.runState.get('w1')?.correctStreak).toBe(0);
+  });
+});
+
+describe('processRecheckResult — wrong on first attempt', () => {
+  it('removes word from recheckPending when answered wrong', () => {
+    const runState = makeState({ w1: { mastery: 3 } });
+    const recheckPending = new Set(['w1']);
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', false, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.recheckPending.has('w1')).toBe(false);
+  });
+
+  it('adds word to recheckReentered when answered wrong', () => {
+    const runState = makeState({ w1: { mastery: 3 } });
+    const recheckPending = new Set(['w1']);
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', false, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.recheckReentered.has('w1')).toBe(true);
+  });
+
+  it('increments seen but suppresses streak/mastery change when answered wrong on first attempt', () => {
+    const runState = makeState({ w1: { mastery: 3, seen: 5 } });
+    const recheckPending = new Set(['w1']);
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', false, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    // mastery must not change
+    expect(result.runState.get('w1')?.mastery).toBe(3);
+    // seen must increment — attempt was recorded
+    expect(result.runState.get('w1')?.seen).toBe(6);
+    // correct must not increment (wrong answer)
+    expect(result.runState.get('w1')?.correct).toBe(1);
+    // streaks must not change
+    expect(result.runState.get('w1')?.wrongStreak).toBe(0);
+  });
+});
+
+describe('processRecheckResult — default streak thresholds', () => {
+  it('applies DEFAULT_STREAK_THRESHOLDS (correctStreakThreshold: 2) when streakThresholds is omitted', () => {
+    // correctStreak: 1 already; one more correct answer must cross the default threshold of 2 and increment mastery.
+    const runState: RunState = new Map([['w1', { wordId: 'w1', seen: 5, correct: 3, mastery: 0, correctStreak: 1, wrongStreak: 0, lapses: 0 }]]);
+    const recheckPending = new Set<string>();
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.runState.get('w1')?.mastery).toBe(1);
+    expect(result.runState.get('w1')?.correctStreak).toBe(2);
+  });
+});
+
+describe('processRecheckResult — wrong on second attempt (recheckReentered)', () => {
+  it('calls updateRunState normally — seen increments', () => {
+    const runState = makeState({ w1: { mastery: 3, seen: 5 } });
+    const recheckPending = new Set<string>(); // not pending
+    const recheckReentered = new Set(['w1']); // second attempt
+
+    const result = processRecheckResult('w1', false, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.runState.get('w1')?.seen).toBe(6);
+  });
+
+  it('keeps word in recheckReentered when it fails (not yet mastered)', () => {
+    // wrongStreak: 1 already, threshold 2 — second wrong decrements mastery below threshold
+    const runState: RunState = new Map([['w1', { wordId: 'w1', seen: 5, correct: 3, mastery: 3, correctStreak: 0, wrongStreak: 1, lapses: 0 }]]);
+    const recheckPending = new Set<string>();
+    const recheckReentered = new Set(['w1']);
+
+    const result = processRecheckResult('w1', false, runState, recheckPending, recheckReentered, masteryThreshold(), { correctStreakThreshold: 2, wrongStreakThreshold: 2, maxMastery: 5 });
+
+    // mastery decremented to 2 (below threshold 3) — word still needs recheck protection
+    expect(result.runState.get('w1')?.mastery).toBe(2);
+    expect(result.recheckReentered.has('w1')).toBe(true);
+  });
+
+  it('removes word from recheckReentered when it masters on second attempt', () => {
+    // correctStreak: 1, threshold 2 — second correct will increment mastery to threshold
+    const runState: RunState = new Map([['w1', { wordId: 'w1', seen: 5, correct: 3, mastery: 2, correctStreak: 1, wrongStreak: 0, lapses: 0 }]]);
+    const recheckPending = new Set<string>();
+    const recheckReentered = new Set(['w1']);
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold(), { correctStreakThreshold: 2, wrongStreakThreshold: 2, maxMastery: 5 });
+
+    // mastery incremented to 3 (at threshold) — graduated, clean up from recheckReentered
+    expect(result.runState.get('w1')?.mastery).toBe(3);
+    expect(result.recheckReentered.has('w1')).toBe(false);
+  });
+});
+
+describe('processRecheckResult — non-recheck word', () => {
+  it('calls updateRunState normally for non-recheck words', () => {
+    const runState = makeState({ w1: { mastery: 0, seen: 2 } });
+    const recheckPending = new Set<string>();
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.runState.get('w1')?.seen).toBe(3);
+  });
+
+  it('leaves an unrelated word in recheckReentered untouched (guarded by nextReentered.has(wordId))', () => {
+    // w2 is mastered and in recheckReentered, but w1 (not w2) is the word being answered.
+    // If the `nextReentered.has(wordId)` guard were skipped, w2 would be wrongly deleted too.
+    const runState = makeState({ w1: { mastery: 0, seen: 2 }, w2: { mastery: 3 } });
+    const recheckPending = new Set<string>();
+    const recheckReentered = new Set(['w2']);
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.recheckReentered.has('w2')).toBe(true);
+  });
+
+  it('creates a fresh word-state entry when the word has never been seen before a recheck', () => {
+    const runState: RunState = new Map();
+    const recheckPending = new Set(['w1']);
+    const recheckReentered = new Set<string>();
+
+    const result = processRecheckResult('w1', true, runState, recheckPending, recheckReentered, masteryThreshold());
+
+    expect(result.runState.get('w1')).toEqual({
+      wordId: 'w1',
+      seen: 1,
+      correct: 1,
+      mastery: 0,
+      correctStreak: 0,
+      wrongStreak: 0,
+      lapses: 0,
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// classifyRechecks
+// ---------------------------------------------------------------------------
+
+describe('classifyRechecks', () => {
+  it('returns empty array for empty results', () => {
+    const results: WordQuizResult[] = [];
+    const recheckPending = new Set(['w1']);
+
+    const classified = classifyRechecks(results, recheckPending);
+
+    expect(classified).toEqual([]);
+  });
+
+  it('returns all false when recheckPending is empty', () => {
+    const results = [makeResult('w1'), makeResult('w2'), makeResult('w3')];
+    const recheckPending = new Set<string>();
+
+    const classified = classifyRechecks(results, recheckPending);
+
+    expect(classified).toEqual([false, false, false]);
+  });
+
+  it('marks all results as rechecks when all are in recheckPending', () => {
+    const results = [makeResult('w1'), makeResult('w2')];
+    const recheckPending = new Set(['w1', 'w2']);
+
+    const classified = classifyRechecks(results, recheckPending);
+
+    expect(classified).toEqual([true, true]);
+  });
+
+  it('marks no results as rechecks when none are in recheckPending', () => {
+    const results = [makeResult('w1'), makeResult('w2')];
+    const recheckPending = new Set(['w3', 'w4']);
+
+    const classified = classifyRechecks(results, recheckPending);
+
+    expect(classified).toEqual([false, false]);
+  });
+
+  it('marks only first occurrence of a word as recheck, consuming it', () => {
+    const results = [makeResult('w1'), makeResult('w1')];
+    const recheckPending = new Set(['w1']);
+
+    const classified = classifyRechecks(results, recheckPending);
+
+    expect(classified).toEqual([true, false]);
+  });
+
+  it('marks results in order, consuming from recheckPending', () => {
+    const results = [makeResult('w1'), makeResult('w2'), makeResult('w1')];
+    const recheckPending = new Set(['w1', 'w2']);
+
+    const classified = classifyRechecks(results, recheckPending);
+
+    expect(classified).toEqual([true, true, false]);
+  });
+
+  it('handles mixed recheck and non-recheck results', () => {
+    const results = [makeResult('w1'), makeResult('w2'), makeResult('w3'), makeResult('w4')];
+    const recheckPending = new Set(['w1', 'w3']);
+
+    const classified = classifyRechecks(results, recheckPending);
+
+    expect(classified).toEqual([true, false, true, false]);
+  });
+
+  it('does not mutate the input recheckPending set', () => {
+    const results = [makeResult('w1'), makeResult('w2')];
+    const recheckPending = new Set(['w1', 'w2']);
+    const originalSize = recheckPending.size;
+
+    classifyRechecks(results, recheckPending);
+
+    expect(recheckPending.size).toBe(originalSize);
+    expect(recheckPending.has('w1')).toBe(true);
+    expect(recheckPending.has('w2')).toBe(true);
+  });
+});
