@@ -1,0 +1,80 @@
+export interface WordState {
+  wordId: string;
+  seen: number;
+  correct: number;
+  mastery: number;
+  correctStreak: number; // consecutive correct answers
+  wrongStreak: number;   // consecutive wrong answers
+  lapses: number;        // times mastery decremented via wrong-streak threshold (FSRS input)
+}
+
+export type RunState = Map<string, WordState>;
+
+export interface StreakThresholds {
+  correctStreakThreshold: number;
+  wrongStreakThreshold: number;
+  maxMastery: number;
+}
+
+/**
+ * Returns a new RunState with the word's streak and mastery updated
+ * for one answer. Does not mutate the input.
+ */
+export function updateRunState(
+  state: RunState,
+  wordId: string,
+  wasCorrect: boolean,
+  thresholds: StreakThresholds,
+): RunState {
+  const next = new Map(state);
+  const existing = next.get(wordId) ?? {
+    wordId,
+    seen: 0,
+    correct: 0,
+    mastery: 0,
+    correctStreak: 0,
+    wrongStreak: 0,
+    lapses: 0,
+  };
+
+  let { mastery, correctStreak, wrongStreak, lapses } = existing;
+
+  if (wasCorrect) {
+    correctStreak += 1;
+    wrongStreak = 0;
+    if (correctStreak >= thresholds.correctStreakThreshold) {
+      mastery = Math.min(thresholds.maxMastery, mastery + 1);
+    }
+  } else {
+    wrongStreak += 1;
+    correctStreak = 0;
+    if (wrongStreak >= thresholds.wrongStreakThreshold) {
+      if (wrongStreak === thresholds.wrongStreakThreshold && mastery > 0) {
+        lapses += 1;
+      }
+      mastery = Math.max(0, mastery - 1);
+    }
+  }
+
+  next.set(wordId, {
+    wordId,
+    seen: existing.seen + 1,
+    correct: existing.correct + (wasCorrect ? 1 : 0),
+    mastery,
+    correctStreak,
+    wrongStreak,
+    lapses,
+  });
+
+  return next;
+}
+
+/** Returns true when mastery meets or exceeds the given threshold. */
+export function isMastered(ws: WordState, threshold: number): boolean {
+  return ws.mastery >= threshold;
+}
+
+export type GraduationHook = (
+  graduatedWordIds: string[],
+  runState: RunState,
+) => void | Promise<void>;

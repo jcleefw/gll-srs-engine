@@ -1,0 +1,58 @@
+[
+  {
+    "kind": "mcq",
+    "wordId": "th::หิว",
+    "direction": "english-to-native",
+    "prompt": "hungry",
+    "choices": [
+      {
+        "label": "a",
+        "value": "กิน",
+        "isCorrect": false
+      },
+      {
+        "label": "b",
+        "value": "แล้ว",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "หิว",
+        "isCorrect": true
+      },
+      {
+        "label": "d",
+        "value": "ไป",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "kind": "mcq",
+    "wordId": "th::แล้ว",
+    "direction": "native-to-romanization",
+    "prompt": "แล้ว",
+    "choices": [
+      {
+        "label": "a",
+        "value": "bpai",
+        "isCorrect": false
+      },
+      {
+        "label": "b",
+        "value": "gin",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "hǐw",
+        "isCorrect": false
+      },
+      {
+        "label": "d",
+        "value": "lɛ́ɛo",
+        "isCorrect": true
+      }
+    ]
+  }
+]

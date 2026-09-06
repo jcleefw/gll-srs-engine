@@ -1,0 +1,95 @@
+[
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::en::001",
+    "direction": "english-to-native",
+    "prompt": "Je mange du riz",
+    "tiles": [
+      {
+        "wordId": "en::rice",
+        "native": "rice",
+        "romanization": "rais",
+        "english": "rice"
+      },
+      {
+        "wordId": "en::i",
+        "native": "I",
+        "romanization": "ai",
+        "english": "I"
+      },
+      {
+        "wordId": "en::eat",
+        "native": "eat",
+        "romanization": "iːt",
+        "english": "eat"
+      }
+    ],
+    "answer": [
+      "en::i",
+      "en::eat",
+      "en::rice"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::en::001",
+    "direction": "romanization-to-native",
+    "prompt": "ai iːt rais",
+    "tiles": [
+      {
+        "wordId": "en::i",
+        "native": "I",
+        "romanization": "ai",
+        "english": "I"
+      },
+      {
+        "wordId": "en::eat",
+        "native": "eat",
+        "romanization": "iːt",
+        "english": "eat"
+      },
+      {
+        "wordId": "en::rice",
+        "native": "rice",
+        "romanization": "rais",
+        "english": "rice"
+      }
+    ],
+    "answer": [
+      "en::i",
+      "en::eat",
+      "en::rice"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::en::001",
+    "direction": "native-to-romanization",
+    "prompt": "I eat rice",
+    "tiles": [
+      {
+        "wordId": "en::rice",
+        "native": "rice",
+        "romanization": "rais",
+        "english": "rice"
+      },
+      {
+        "wordId": "en::eat",
+        "native": "eat",
+        "romanization": "iːt",
+        "english": "eat"
+      },
+      {
+        "wordId": "en::i",
+        "native": "I",
+        "romanization": "ai",
+        "english": "I"
+      }
+    ],
+    "answer": [
+      "en::i",
+      "en::eat",
+      "en::rice"
+    ]
+  }
+]

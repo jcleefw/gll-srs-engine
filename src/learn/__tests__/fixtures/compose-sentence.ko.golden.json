@@ -1,0 +1,95 @@
+[
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::ko::001",
+    "direction": "english-to-native",
+    "prompt": "I eat rice",
+    "tiles": [
+      {
+        "wordId": "ko::rice",
+        "native": "밥을",
+        "romanization": "babeul",
+        "english": "rice"
+      },
+      {
+        "wordId": "ko::i",
+        "native": "저는",
+        "romanization": "jeoneun",
+        "english": "I"
+      },
+      {
+        "wordId": "ko::eat",
+        "native": "먹어요",
+        "romanization": "meogeoyo",
+        "english": "eat"
+      }
+    ],
+    "answer": [
+      "ko::i",
+      "ko::eat",
+      "ko::rice"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::ko::001",
+    "direction": "romanization-to-native",
+    "prompt": "jeoneun meogeoyo babeul",
+    "tiles": [
+      {
+        "wordId": "ko::i",
+        "native": "저는",
+        "romanization": "jeoneun",
+        "english": "I"
+      },
+      {
+        "wordId": "ko::eat",
+        "native": "먹어요",
+        "romanization": "meogeoyo",
+        "english": "eat"
+      },
+      {
+        "wordId": "ko::rice",
+        "native": "밥을",
+        "romanization": "babeul",
+        "english": "rice"
+      }
+    ],
+    "answer": [
+      "ko::i",
+      "ko::eat",
+      "ko::rice"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::ko::001",
+    "direction": "native-to-romanization",
+    "prompt": "저는먹어요밥을",
+    "tiles": [
+      {
+        "wordId": "ko::rice",
+        "native": "밥을",
+        "romanization": "babeul",
+        "english": "rice"
+      },
+      {
+        "wordId": "ko::eat",
+        "native": "먹어요",
+        "romanization": "meogeoyo",
+        "english": "eat"
+      },
+      {
+        "wordId": "ko::i",
+        "native": "저는",
+        "romanization": "jeoneun",
+        "english": "I"
+      }
+    ],
+    "answer": [
+      "ko::i",
+      "ko::eat",
+      "ko::rice"
+    ]
+  }
+]

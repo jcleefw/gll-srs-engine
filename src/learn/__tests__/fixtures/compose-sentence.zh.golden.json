@@ -1,0 +1,95 @@
+[
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::zh::001",
+    "direction": "english-to-native",
+    "prompt": "I eat rice",
+    "tiles": [
+      {
+        "wordId": "zh::rice",
+        "native": "饭",
+        "romanization": "fàn",
+        "english": "rice"
+      },
+      {
+        "wordId": "zh::i",
+        "native": "我",
+        "romanization": "wǒ",
+        "english": "I"
+      },
+      {
+        "wordId": "zh::eat",
+        "native": "吃",
+        "romanization": "chī",
+        "english": "eat"
+      }
+    ],
+    "answer": [
+      "zh::i",
+      "zh::eat",
+      "zh::rice"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::zh::001",
+    "direction": "romanization-to-native",
+    "prompt": "wǒ chī fàn",
+    "tiles": [
+      {
+        "wordId": "zh::i",
+        "native": "我",
+        "romanization": "wǒ",
+        "english": "I"
+      },
+      {
+        "wordId": "zh::eat",
+        "native": "吃",
+        "romanization": "chī",
+        "english": "eat"
+      },
+      {
+        "wordId": "zh::rice",
+        "native": "饭",
+        "romanization": "fàn",
+        "english": "rice"
+      }
+    ],
+    "answer": [
+      "zh::i",
+      "zh::eat",
+      "zh::rice"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::zh::001",
+    "direction": "native-to-romanization",
+    "prompt": "我吃饭",
+    "tiles": [
+      {
+        "wordId": "zh::rice",
+        "native": "饭",
+        "romanization": "fàn",
+        "english": "rice"
+      },
+      {
+        "wordId": "zh::eat",
+        "native": "吃",
+        "romanization": "chī",
+        "english": "eat"
+      },
+      {
+        "wordId": "zh::i",
+        "native": "我",
+        "romanization": "wǒ",
+        "english": "I"
+      }
+    ],
+    "answer": [
+      "zh::i",
+      "zh::eat",
+      "zh::rice"
+    ]
+  }
+]

@@ -1,0 +1,95 @@
+[
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::th::001",
+    "direction": "english-to-native",
+    "prompt": "I'm hungry, let's go eat",
+    "tiles": [
+      {
+        "wordId": "th::eat",
+        "native": "กิน",
+        "romanization": "gin",
+        "english": "eat"
+      },
+      {
+        "wordId": "th::hungry",
+        "native": "หิว",
+        "romanization": "hǐw",
+        "english": "hungry"
+      },
+      {
+        "wordId": "th::go",
+        "native": "ไป",
+        "romanization": "bpai",
+        "english": "go"
+      }
+    ],
+    "answer": [
+      "th::hungry",
+      "th::go",
+      "th::eat"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::th::001",
+    "direction": "romanization-to-native",
+    "prompt": "hǐw bpai gin",
+    "tiles": [
+      {
+        "wordId": "th::hungry",
+        "native": "หิว",
+        "romanization": "hǐw",
+        "english": "hungry"
+      },
+      {
+        "wordId": "th::go",
+        "native": "ไป",
+        "romanization": "bpai",
+        "english": "go"
+      },
+      {
+        "wordId": "th::eat",
+        "native": "กิน",
+        "romanization": "gin",
+        "english": "eat"
+      }
+    ],
+    "answer": [
+      "th::hungry",
+      "th::go",
+      "th::eat"
+    ]
+  },
+  {
+    "kind": "word-block",
+    "sentenceId": "sent::th::001",
+    "direction": "native-to-romanization",
+    "prompt": "หิวไปกิน",
+    "tiles": [
+      {
+        "wordId": "th::eat",
+        "native": "กิน",
+        "romanization": "gin",
+        "english": "eat"
+      },
+      {
+        "wordId": "th::go",
+        "native": "ไป",
+        "romanization": "bpai",
+        "english": "go"
+      },
+      {
+        "wordId": "th::hungry",
+        "native": "หิว",
+        "romanization": "hǐw",
+        "english": "hungry"
+      }
+    ],
+    "answer": [
+      "th::hungry",
+      "th::go",
+      "th::eat"
+    ]
+  }
+]

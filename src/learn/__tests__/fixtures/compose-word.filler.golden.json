@@ -1,0 +1,226 @@
+[
+  {
+    "kind": "mcq",
+    "wordId": "th::แล้ว",
+    "direction": "native-to-english",
+    "prompt": "แล้ว",
+    "choices": [
+      {
+        "label": "a",
+        "value": "already; now",
+        "isCorrect": true
+      },
+      {
+        "label": "b",
+        "value": "hungry",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "to eat",
+        "isCorrect": false
+      },
+      {
+        "label": "d",
+        "value": "to go",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "kind": "mcq",
+    "wordId": "th::แล้ว",
+    "direction": "romanization-to-native",
+    "prompt": "lɛ́ɛo",
+    "choices": [
+      {
+        "label": "a",
+        "value": "กิน",
+        "isCorrect": false
+      },
+      {
+        "label": "b",
+        "value": "ไป",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "แล้ว",
+        "isCorrect": true
+      },
+      {
+        "label": "d",
+        "value": "หิว",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "kind": "mcq",
+    "wordId": "th::ไป",
+    "direction": "native-to-romanization",
+    "prompt": "ไป",
+    "choices": [
+      {
+        "label": "a",
+        "value": "lɛ́ɛo",
+        "isCorrect": false
+      },
+      {
+        "label": "b",
+        "value": "hǐw",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "gin",
+        "isCorrect": false
+      },
+      {
+        "label": "d",
+        "value": "bpai",
+        "isCorrect": true
+      }
+    ]
+  },
+  {
+    "kind": "mcq",
+    "wordId": "th::แล้ว",
+    "direction": "native-to-romanization",
+    "prompt": "แล้ว",
+    "choices": [
+      {
+        "label": "a",
+        "value": "bpai",
+        "isCorrect": false
+      },
+      {
+        "label": "b",
+        "value": "gin",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "hǐw",
+        "isCorrect": false
+      },
+      {
+        "label": "d",
+        "value": "lɛ́ɛo",
+        "isCorrect": true
+      }
+    ]
+  },
+  {
+    "kind": "mcq",
+    "wordId": "th::หิว",
+    "direction": "native-to-romanization",
+    "prompt": "หิว",
+    "choices": [
+      {
+        "label": "a",
+        "value": "hǐw",
+        "isCorrect": true
+      },
+      {
+        "label": "b",
+        "value": "bpai",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "gin",
+        "isCorrect": false
+      },
+      {
+        "label": "d",
+        "value": "lɛ́ɛo",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "kind": "mcq",
+    "wordId": "th::หิว",
+    "direction": "english-to-native",
+    "prompt": "hungry",
+    "choices": [
+      {
+        "label": "a",
+        "value": "กิน",
+        "isCorrect": false
+      },
+      {
+        "label": "b",
+        "value": "แล้ว",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "หิว",
+        "isCorrect": true
+      },
+      {
+        "label": "d",
+        "value": "ไป",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "kind": "mcq",
+    "wordId": "th::หิว",
+    "direction": "romanization-to-native",
+    "prompt": "hǐw",
+    "choices": [
+      {
+        "label": "a",
+        "value": "ไป",
+        "isCorrect": false
+      },
+      {
+        "label": "b",
+        "value": "กิน",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "หิว",
+        "isCorrect": true
+      },
+      {
+        "label": "d",
+        "value": "แล้ว",
+        "isCorrect": false
+      }
+    ]
+  },
+  {
+    "kind": "mcq",
+    "wordId": "th::ไป",
+    "direction": "native-to-english",
+    "prompt": "ไป",
+    "choices": [
+      {
+        "label": "a",
+        "value": "hungry",
+        "isCorrect": false
+      },
+      {
+        "label": "b",
+        "value": "to eat",
+        "isCorrect": false
+      },
+      {
+        "label": "c",
+        "value": "already; now",
+        "isCorrect": false
+      },
+      {
+        "label": "d",
+        "value": "to go",
+        "isCorrect": true
+      }
+    ]
+  }
+]
