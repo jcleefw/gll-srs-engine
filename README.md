@@ -92,6 +92,9 @@ an environment variable. See [demo/README.md](demo/README.md).
 
 ### Mutation testing
 
+Requires Node >=22 — StrykerJS 10's own floor, ahead of the >=20 the rest of
+this package targets.
+
 ```bash
 pnpm test:mutation                                        # full src/** scope
 pnpm exec stryker run --mutate 'src/learn/engine/some-file.ts'   # one file

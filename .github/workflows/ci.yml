@@ -42,7 +42,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # StrykerJS 10 requires Node >=22 — ahead of the >=20 the rest of
+          # the toolchain (and package.json's engines.node) targets.
+          node-version: 22
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
