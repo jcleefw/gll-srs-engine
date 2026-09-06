@@ -1,0 +1,5 @@
+staged_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.ts' '*.vue')
+
+if [ -n "$staged_files" ]; then
+  node scripts/scan-prose-comments.mjs --check $staged_files
+fi
