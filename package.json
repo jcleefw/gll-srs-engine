@@ -39,7 +39,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
-    "prepare": "pnpm run build",
+    "prepare": "husky && pnpm run build",
     "test": "vitest run --exclude \"**/golden/**\"",
     "test:golden": "vitest run src/learn/__tests__/golden src/review/__tests__/FsrsScheduler.golden.test.ts",
     "test:property": "vitest run .property.test.ts",
@@ -62,6 +62,7 @@
     "@types/node": "^25.5.0",
     "eslint": "^9",
     "fast-check": "^4.9.0",
+    "husky": "^9.1.7",
     "jiti": "^2.6.1",
     "tsx": "^4",
     "typescript": "^5.7",
