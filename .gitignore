@@ -4,4 +4,4 @@ reports/
 .stryker-tmp/
 *.tsbuildinfo
 .DS_Store
-demo/*.local.json
+demo/.demo-state.json
