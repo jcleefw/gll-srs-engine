@@ -6,7 +6,6 @@ export default defineConfig({
       'src/**/__tests__/**/*.test.ts',
       'data/**/__tests__/**/*.test.ts',
       '__tests__/integration/**/*.test.ts',
-      'scripts/**/__tests__/**/*.test.ts',
     ],
     globals: true,
     setupFiles: ['__tests__/setup.ts'],
