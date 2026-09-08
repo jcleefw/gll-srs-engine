@@ -1,0 +1,208 @@
+[
+  {
+    "file": "src/review/FsrsScheduler.ts",
+    "exports": [
+      {
+        "name": "FsrsScheduler",
+        "kind": "ClassDeclaration"
+      }
+    ],
+    "imports": [
+      {
+        "from": "ts-fsrs",
+        "names": [
+          "fsrs",
+          "generatorParameters",
+          "createEmptyCard",
+          "Rating",
+          "Card",
+          "CardInput",
+          "Grade",
+          "FSRSParameters"
+        ]
+      },
+      {
+        "from": "./types.js",
+        "names": [
+          "ReviewScheduler",
+          "ReviewCard",
+          "ReviewRating",
+          "GraduationPerformance",
+          "ReviewHooks"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/review/index.ts",
+    "exports": [
+      {
+        "name": "ReviewRating",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "GraduationPerformance",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "correctStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "lapses",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "correctRatio",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ReviewCard",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "due",
+            "type": "Date",
+            "optional": false
+          },
+          {
+            "name": "schedulerData",
+            "type": "unknown",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ReviewScheduler",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "seed",
+            "type": "(wordId: string, performance: GraduationPerformance, now: Date, hooks?: ReviewHooks) => ReviewCard",
+            "optional": false
+          },
+          {
+            "name": "schedule",
+            "type": "(card: ReviewCard, rating: ReviewRating, now: Date) => ReviewCard",
+            "optional": false
+          },
+          {
+            "name": "isDue",
+            "type": "(card: ReviewCard, now: Date) => boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ReviewHooks",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "onSeeded",
+            "type": "(wordId: string, rating: ReviewRating, dueAt: Date) => void",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "FsrsScheduler",
+        "kind": "ClassDeclaration"
+      }
+    ],
+    "imports": []
+  },
+  {
+    "file": "src/review/types.ts",
+    "exports": [
+      {
+        "name": "ReviewRating",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "GraduationPerformance",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "correctStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "lapses",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "correctRatio",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ReviewCard",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "due",
+            "type": "Date",
+            "optional": false
+          },
+          {
+            "name": "schedulerData",
+            "type": "unknown",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ReviewHooks",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "onSeeded",
+            "type": "(wordId: string, rating: ReviewRating, dueAt: Date) => void",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "ReviewScheduler",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "seed",
+            "type": "(wordId: string, performance: GraduationPerformance, now: Date, hooks?: ReviewHooks) => ReviewCard",
+            "optional": false
+          },
+          {
+            "name": "schedule",
+            "type": "(card: ReviewCard, rating: ReviewRating, now: Date) => ReviewCard",
+            "optional": false
+          },
+          {
+            "name": "isDue",
+            "type": "(card: ReviewCard, now: Date) => boolean",
+            "optional": false
+          }
+        ]
+      }
+    ],
+    "imports": []
+  }
+]

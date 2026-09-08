@@ -3,3 +3,13 @@ staged_files=$(git diff --cached --name-only --diff-filter=ACM -- '*.ts' '*.vue'
 if [ -n "$staged_files" ]; then
   node scripts/scan-prose-comments.mjs --check $staged_files
 fi
+
+# Non-blocking: regenerate + stage CODEMAP.json for any covered module
+# (config/learn/review/shelving) that has staged .ts changes. This must
+# never fail or block the commit, regardless of outcome.
+set +e
+if echo "$staged_files" | grep -qE '^src/(config|learn|review|shelving)/.*\.ts$'; then
+  node scripts/generate-codemap.mjs || true
+  git add src/config/CODEMAP.json src/learn/CODEMAP.json src/review/CODEMAP.json src/shelving/CODEMAP.json || true
+fi
+true
