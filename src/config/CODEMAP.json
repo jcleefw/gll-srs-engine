@@ -1,0 +1,27 @@
+[
+  {
+    "file": "src/config/language.ts",
+    "exports": [
+      {
+        "name": "WordJoin",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "LanguageConfig",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordJoin",
+            "type": "WordJoin",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "LANGUAGE_CONFIG",
+        "kind": "VariableDeclaration"
+      }
+    ],
+    "imports": []
+  }
+]

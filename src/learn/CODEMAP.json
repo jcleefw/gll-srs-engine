@@ -1,0 +1,2206 @@
+[
+  {
+    "file": "src/learn/engine/adaptive-session.ts",
+    "exports": [
+      {
+        "name": "initAdaptiveSession",
+        "kind": "FunctionDeclaration",
+        "signature": "(words: QuizItem[], config: SessionConfig, recheckIds: Set<string> = new Set(), initialRunState?: RunState) => AdaptiveSessionState"
+      },
+      {
+        "name": "advanceAdaptiveSession",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: AdaptiveSessionState, batchOutput: BatchOutput, config: SessionConfig) => AdaptiveSessionState"
+      },
+      {
+        "name": "AdaptiveSessionState",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "active",
+            "type": "QuizItem[]",
+            "optional": false
+          },
+          {
+            "name": "queue",
+            "type": "QuizItem[]",
+            "optional": false
+          },
+          {
+            "name": "runState",
+            "type": "RunState",
+            "optional": false
+          },
+          {
+            "name": "recheckPending",
+            "type": "Set<string>",
+            "optional": false
+          },
+          {
+            "name": "recheckReentered",
+            "type": "Set<string>",
+            "optional": false
+          },
+          {
+            "name": "batchNum",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "sessionRetryCounts",
+            "type": "Map<string, number>",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SessionConfig",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordsPerBatch",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "masteryThreshold",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "streakThresholds",
+            "type": "StreakThresholds",
+            "optional": false
+          },
+          {
+            "name": "maxRetryPerSession",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "maxRecheckRatio",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      }
+    ],
+    "imports": [
+      {
+        "from": "./compose-word-batch.js",
+        "names": [
+          "QuizItem"
+        ]
+      },
+      {
+        "from": "../types/word-state.js",
+        "names": [
+          "RunState",
+          "StreakThresholds"
+        ]
+      },
+      {
+        "from": "./batch-queue.js",
+        "names": [
+          "BatchOutput"
+        ]
+      },
+      {
+        "from": "./session.js",
+        "names": [
+          "updateMasteryState",
+          "nextActivePool"
+        ]
+      },
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "WordQuizResult"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/engine/assemble-batch.ts",
+    "exports": [
+      {
+        "name": "assembleBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(active: QuizItem[], wordPool: QuizItem[], foundationalPool: QuizItem[], wordsPerBatch: number, options: AssembleBatchOptions = {}, hooks?: EngineHooks) => QuizQuestion[]"
+      },
+      {
+        "name": "AssembleBatchOptions",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "shuffle",
+            "type": "boolean",
+            "optional": true
+          },
+          {
+            "name": "extraThunks",
+            "type": "((excludeIds?: Set<string>) => QuizQuestion[])[]",
+            "optional": true
+          },
+          {
+            "name": "excludeIds",
+            "type": "Set<string>",
+            "optional": true
+          }
+        ]
+      }
+    ],
+    "imports": [
+      {
+        "from": "./compose-registry.js",
+        "names": [
+          "createComposerRegistry",
+          "assembleBatchQuestions"
+        ]
+      },
+      {
+        "from": "./compose-word-batch.js",
+        "names": [
+          "composeWordBatchItems",
+          "QuizItem"
+        ]
+      },
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "QuizQuestion"
+        ]
+      },
+      {
+        "from": "../types/hooks.js",
+        "names": [
+          "EngineHooks"
+        ]
+      },
+      {
+        "from": "../utils/shuffle.js",
+        "names": [
+          "shuffle"
+        ]
+      },
+      {
+        "from": "./validate-batch.js",
+        "names": [
+          "validateBatch",
+          "BatchViolation"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/engine/batch-queue.ts",
+    "exports": [
+      {
+        "name": "initBatchState",
+        "kind": "FunctionDeclaration",
+        "signature": "(initialQuestions: QuizQuestion[], retryPerWordCap: number, sessionRetryCounts: Map<string, number>, retryPerSessionCap: number) => BatchState"
+      },
+      {
+        "name": "isBatchDone",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: BatchState) => boolean"
+      },
+      {
+        "name": "nextQuestion",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: BatchState) => {\n  question: QuizQuestion | null;\n  state: BatchState;\n}"
+      },
+      {
+        "name": "submitBatchResult",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: BatchState, result: QuizResult, hooks?: EngineHooks) => BatchState"
+      },
+      {
+        "name": "finishBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: BatchState) => BatchOutput"
+      },
+      {
+        "name": "BatchOutput",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "results",
+            "type": "QuizResult[]",
+            "optional": false
+          },
+          {
+            "name": "sessionRetryCounts",
+            "type": "Map<string, number>",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "BatchState",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "queue",
+            "type": "QuizQuestion[]",
+            "optional": false
+          },
+          {
+            "name": "results",
+            "type": "QuizResult[]",
+            "optional": false
+          },
+          {
+            "name": "batchRetryCounts",
+            "type": "Map<string, number>",
+            "optional": false
+          },
+          {
+            "name": "questionCache",
+            "type": "Map<string, QuizQuestion>",
+            "optional": false
+          },
+          {
+            "name": "initialCount",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "retryPerWordCap",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "retryPerSessionCap",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "sessionRetryCounts",
+            "type": "Map<string, number>",
+            "optional": false
+          }
+        ]
+      }
+    ],
+    "imports": [
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "QuizQuestion",
+          "QuizResult"
+        ]
+      },
+      {
+        "from": "../types/hooks.js",
+        "names": [
+          "EngineHooks"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/engine/compose-registry.ts",
+    "exports": [
+      {
+        "name": "createComposerRegistry",
+        "kind": "FunctionDeclaration",
+        "signature": "() => RegistryWithThunks"
+      },
+      {
+        "name": "assembleBatchQuestions",
+        "kind": "FunctionDeclaration",
+        "signature": "(registry: RegistryWithThunks) => QuizQuestion[]"
+      },
+      {
+        "name": "ComposerRegistry",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "add",
+            "type": "(thunk: () => QuizQuestion[]) => void",
+            "optional": false
+          }
+        ]
+      }
+    ],
+    "imports": [
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "QuizQuestion"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/engine/compose-sentence-batch.ts",
+    "exports": [
+      {
+        "name": "composeSentenceBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(ctx: SentenceContext, resolvedTiles: SentenceTile[], language: string, options?: { shuffle?: boolean; rng?: () => number }) => SentenceQuestion[]"
+      }
+    ],
+    "imports": [
+      {
+        "from": "../types/sentence.js",
+        "names": [
+          "SentenceContext"
+        ]
+      },
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "SentenceQuestion",
+          "SentenceTile"
+        ]
+      },
+      {
+        "from": "../../config/language.js",
+        "names": [
+          "LANGUAGE_CONFIG",
+          "WordJoin"
+        ]
+      },
+      {
+        "from": "../utils/shuffle.js",
+        "names": [
+          "shuffle"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/engine/compose-word-batch.ts",
+    "exports": [
+      {
+        "name": "composeWordBatchMulti",
+        "kind": "FunctionDeclaration",
+        "signature": "(words: QuizItem[], pool: QuizItem[], options: { questionLimit: number; shuffle?: boolean; rng?: () => number }, hooks?: EngineHooks) => MCQQuestion[]"
+      },
+      {
+        "name": "composeWordBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(item: QuizItem, pool: QuizItem[], rng?: () => number) => MCQQuestion[]"
+      },
+      {
+        "name": "QuizItem",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "FOUNDATIONAL_DIRECTIONS",
+        "kind": "VariableDeclaration"
+      },
+      {
+        "name": "composeWordBatchItems",
+        "kind": "VariableDeclaration"
+      }
+    ],
+    "imports": [
+      {
+        "from": "../../../data/mock/mock-words.js",
+        "names": [
+          "MockWord"
+        ]
+      },
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "QuizChoice",
+          "QuizDirection",
+          "MCQQuestion"
+        ]
+      },
+      {
+        "from": "../types/foundational.js",
+        "names": [
+          "MockFoundational"
+        ]
+      },
+      {
+        "from": "../types/hooks.js",
+        "names": [
+          "EngineHooks"
+        ]
+      },
+      {
+        "from": "../utils/shuffle.js",
+        "names": [
+          "shuffle"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/engine/sentence-scheduling.ts",
+    "exports": [
+      {
+        "name": "resolveEligibleContexts",
+        "kind": "FunctionDeclaration",
+        "signature": "(corpus: SentenceContext[], runState: RunState, allPool: QuizItem[], sentenceRunState: SentenceRunState, batchNum: number, config: { minSeenForSentence: number; sentenceBatchGap: number }, excludeIds?: Set<string>, hooks?: EngineHooks) => { ctx: SentenceContext; tiles: SentenceTile[] }[]"
+      },
+      {
+        "name": "updateSentenceRunState",
+        "kind": "FunctionDeclaration",
+        "signature": "(sentenceRunState: SentenceRunState, results: SentenceQuizResult[], batchNum: number, config: {\n    sentenceCorrectStreakThreshold: number;\n    sentenceWrongStreakThreshold: number;\n  }) => SentenceRunState"
+      }
+    ],
+    "imports": [
+      {
+        "from": "../types/sentence.js",
+        "names": [
+          "SentenceContext"
+        ]
+      },
+      {
+        "from": "../types/sentence-state.js",
+        "names": [
+          "SentenceRunState"
+        ]
+      },
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "SentenceQuizResult"
+        ]
+      },
+      {
+        "from": "../types/word-state.js",
+        "names": [
+          "RunState"
+        ]
+      },
+      {
+        "from": "./compose-word-batch.js",
+        "names": [
+          "QuizItem"
+        ]
+      },
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "SentenceTile"
+        ]
+      },
+      {
+        "from": "../types/hooks.js",
+        "names": [
+          "EngineHooks",
+          "SentenceExclusionReason"
+        ]
+      },
+      {
+        "from": "../types/sentence-state.js",
+        "names": [
+          "defaultSentenceState"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/engine/session.ts",
+    "exports": [
+      {
+        "name": "processRecheckResult",
+        "kind": "FunctionDeclaration",
+        "signature": "(wordId: string, wasCorrect: boolean, runState: RunState, recheckPending: Set<string>, recheckReentered: Set<string>, masteryThreshold: number, streakThresholds: StreakThresholds = DEFAULT_STREAK_THRESHOLDS) => RecheckResultOutput"
+      },
+      {
+        "name": "classifyRechecks",
+        "kind": "FunctionDeclaration",
+        "signature": "(results: WordQuizResult[], recheckPending: Set<string>) => boolean[]"
+      },
+      {
+        "name": "nextActivePool",
+        "kind": "FunctionDeclaration",
+        "signature": "(active: QuizItem[], queue: QuizItem[], wordsPerBatch: number, runState: RunState, masteryThreshold: number, recheckExempt: Set<string> = new Set(), hooks?: EngineHooks) => { active: QuizItem[]; queue: QuizItem[] }"
+      },
+      {
+        "name": "updateMasteryState",
+        "kind": "FunctionDeclaration",
+        "signature": "(results: WordQuizResult[], runState: RunState, recheckPending: Set<string>, recheckReentered: Set<string>, masteryThreshold: number, streakThresholds: StreakThresholds) => MasteryUpdateResult"
+      },
+      {
+        "name": "getNewlyMasteredIds",
+        "kind": "FunctionDeclaration",
+        "signature": "(prevState: RunState, nextState: RunState, wordIds: string[], masteryThreshold: number, hooks?: EngineHooks) => string[]"
+      },
+      {
+        "name": "RecheckResultOutput",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "runState",
+            "type": "RunState",
+            "optional": false
+          },
+          {
+            "name": "recheckPending",
+            "type": "Set<string>",
+            "optional": false
+          },
+          {
+            "name": "recheckReentered",
+            "type": "Set<string>",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MasteryUpdateResult",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "runState",
+            "type": "RunState",
+            "optional": false
+          },
+          {
+            "name": "recheckPending",
+            "type": "Set<string>",
+            "optional": false
+          },
+          {
+            "name": "recheckReentered",
+            "type": "Set<string>",
+            "optional": false
+          }
+        ]
+      }
+    ],
+    "imports": [
+      {
+        "from": "./compose-word-batch.js",
+        "names": [
+          "QuizItem"
+        ]
+      },
+      {
+        "from": "../types/word-state.js",
+        "names": [
+          "RunState",
+          "StreakThresholds",
+          "updateRunState",
+          "isMastered"
+        ]
+      },
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "WordQuizResult"
+        ]
+      },
+      {
+        "from": "../types/hooks.js",
+        "names": [
+          "EngineHooks"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/engine/validate-batch.ts",
+    "exports": [
+      {
+        "name": "validateBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(questions: QuizQuestion[], constraints: BatchConstraints = {}) => BatchValidation"
+      },
+      {
+        "name": "BatchConstraints",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "excludeIds",
+            "type": "Set<string>",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "BatchViolation",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "BatchValidation",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "valid",
+            "type": "boolean",
+            "optional": false
+          },
+          {
+            "name": "violations",
+            "type": "BatchViolation[]",
+            "optional": false
+          }
+        ]
+      }
+    ],
+    "imports": [
+      {
+        "from": "../types/quiz.js",
+        "names": [
+          "QuizQuestion"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/index.ts",
+    "exports": [
+      {
+        "name": "shuffle",
+        "kind": "FunctionDeclaration",
+        "signature": "(arr: T[], rng: () => number = Math.random) => T[]"
+      },
+      {
+        "name": "composeWordBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(item: QuizItem, pool: QuizItem[], rng?: () => number) => MCQQuestion[]"
+      },
+      {
+        "name": "composeWordBatchMulti",
+        "kind": "FunctionDeclaration",
+        "signature": "(words: QuizItem[], pool: QuizItem[], options: { questionLimit: number; shuffle?: boolean; rng?: () => number }, hooks?: EngineHooks) => MCQQuestion[]"
+      },
+      {
+        "name": "composeWordBatchItems",
+        "kind": "VariableDeclaration"
+      },
+      {
+        "name": "FOUNDATIONAL_DIRECTIONS",
+        "kind": "VariableDeclaration"
+      },
+      {
+        "name": "composeSentenceBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(ctx: SentenceContext, resolvedTiles: SentenceTile[], language: string, options?: { shuffle?: boolean; rng?: () => number }) => SentenceQuestion[]"
+      },
+      {
+        "name": "createComposerRegistry",
+        "kind": "FunctionDeclaration",
+        "signature": "() => RegistryWithThunks"
+      },
+      {
+        "name": "assembleBatchQuestions",
+        "kind": "FunctionDeclaration",
+        "signature": "(registry: RegistryWithThunks) => QuizQuestion[]"
+      },
+      {
+        "name": "ComposerRegistry",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "add",
+            "type": "(thunk: () => QuizQuestion[]) => void",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "QuizItem",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "processRecheckResult",
+        "kind": "FunctionDeclaration",
+        "signature": "(wordId: string, wasCorrect: boolean, runState: RunState, recheckPending: Set<string>, recheckReentered: Set<string>, masteryThreshold: number, streakThresholds: StreakThresholds = DEFAULT_STREAK_THRESHOLDS) => RecheckResultOutput"
+      },
+      {
+        "name": "classifyRechecks",
+        "kind": "FunctionDeclaration",
+        "signature": "(results: WordQuizResult[], recheckPending: Set<string>) => boolean[]"
+      },
+      {
+        "name": "nextActivePool",
+        "kind": "FunctionDeclaration",
+        "signature": "(active: QuizItem[], queue: QuizItem[], wordsPerBatch: number, runState: RunState, masteryThreshold: number, recheckExempt: Set<string> = new Set(), hooks?: EngineHooks) => { active: QuizItem[]; queue: QuizItem[] }"
+      },
+      {
+        "name": "updateMasteryState",
+        "kind": "FunctionDeclaration",
+        "signature": "(results: WordQuizResult[], runState: RunState, recheckPending: Set<string>, recheckReentered: Set<string>, masteryThreshold: number, streakThresholds: StreakThresholds) => MasteryUpdateResult"
+      },
+      {
+        "name": "getNewlyMasteredIds",
+        "kind": "FunctionDeclaration",
+        "signature": "(prevState: RunState, nextState: RunState, wordIds: string[], masteryThreshold: number, hooks?: EngineHooks) => string[]"
+      },
+      {
+        "name": "RecheckResultOutput",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "runState",
+            "type": "RunState",
+            "optional": false
+          },
+          {
+            "name": "recheckPending",
+            "type": "Set<string>",
+            "optional": false
+          },
+          {
+            "name": "recheckReentered",
+            "type": "Set<string>",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MasteryUpdateResult",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "runState",
+            "type": "RunState",
+            "optional": false
+          },
+          {
+            "name": "recheckPending",
+            "type": "Set<string>",
+            "optional": false
+          },
+          {
+            "name": "recheckReentered",
+            "type": "Set<string>",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "initAdaptiveSession",
+        "kind": "FunctionDeclaration",
+        "signature": "(words: QuizItem[], config: SessionConfig, recheckIds: Set<string> = new Set(), initialRunState?: RunState) => AdaptiveSessionState"
+      },
+      {
+        "name": "advanceAdaptiveSession",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: AdaptiveSessionState, batchOutput: BatchOutput, config: SessionConfig) => AdaptiveSessionState"
+      },
+      {
+        "name": "AdaptiveSessionState",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "active",
+            "type": "QuizItem[]",
+            "optional": false
+          },
+          {
+            "name": "queue",
+            "type": "QuizItem[]",
+            "optional": false
+          },
+          {
+            "name": "runState",
+            "type": "RunState",
+            "optional": false
+          },
+          {
+            "name": "recheckPending",
+            "type": "Set<string>",
+            "optional": false
+          },
+          {
+            "name": "recheckReentered",
+            "type": "Set<string>",
+            "optional": false
+          },
+          {
+            "name": "batchNum",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "sessionRetryCounts",
+            "type": "Map<string, number>",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SessionConfig",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordsPerBatch",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "masteryThreshold",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "streakThresholds",
+            "type": "StreakThresholds",
+            "optional": false
+          },
+          {
+            "name": "maxRetryPerSession",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "maxRecheckRatio",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "initBatchState",
+        "kind": "FunctionDeclaration",
+        "signature": "(initialQuestions: QuizQuestion[], retryPerWordCap: number, sessionRetryCounts: Map<string, number>, retryPerSessionCap: number) => BatchState"
+      },
+      {
+        "name": "nextQuestion",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: BatchState) => {\n  question: QuizQuestion | null;\n  state: BatchState;\n}"
+      },
+      {
+        "name": "submitBatchResult",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: BatchState, result: QuizResult, hooks?: EngineHooks) => BatchState"
+      },
+      {
+        "name": "finishBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: BatchState) => BatchOutput"
+      },
+      {
+        "name": "isBatchDone",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: BatchState) => boolean"
+      },
+      {
+        "name": "BatchOutput",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "results",
+            "type": "QuizResult[]",
+            "optional": false
+          },
+          {
+            "name": "sessionRetryCounts",
+            "type": "Map<string, number>",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "BatchState",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "queue",
+            "type": "QuizQuestion[]",
+            "optional": false
+          },
+          {
+            "name": "results",
+            "type": "QuizResult[]",
+            "optional": false
+          },
+          {
+            "name": "batchRetryCounts",
+            "type": "Map<string, number>",
+            "optional": false
+          },
+          {
+            "name": "questionCache",
+            "type": "Map<string, QuizQuestion>",
+            "optional": false
+          },
+          {
+            "name": "initialCount",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "retryPerWordCap",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "retryPerSessionCap",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "sessionRetryCounts",
+            "type": "Map<string, number>",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "assembleBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(active: QuizItem[], wordPool: QuizItem[], foundationalPool: QuizItem[], wordsPerBatch: number, options: AssembleBatchOptions = {}, hooks?: EngineHooks) => QuizQuestion[]"
+      },
+      {
+        "name": "AssembleBatchOptions",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "shuffle",
+            "type": "boolean",
+            "optional": true
+          },
+          {
+            "name": "extraThunks",
+            "type": "((excludeIds?: Set<string>) => QuizQuestion[])[]",
+            "optional": true
+          },
+          {
+            "name": "excludeIds",
+            "type": "Set<string>",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "validateBatch",
+        "kind": "FunctionDeclaration",
+        "signature": "(questions: QuizQuestion[], constraints: BatchConstraints = {}) => BatchValidation"
+      },
+      {
+        "name": "BatchConstraints",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "excludeIds",
+            "type": "Set<string>",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "BatchValidation",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "valid",
+            "type": "boolean",
+            "optional": false
+          },
+          {
+            "name": "violations",
+            "type": "BatchViolation[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "BatchViolation",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "updateRunState",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: RunState, wordId: string, wasCorrect: boolean, thresholds: StreakThresholds) => RunState"
+      },
+      {
+        "name": "isMastered",
+        "kind": "FunctionDeclaration",
+        "signature": "(ws: WordState, threshold: number) => boolean"
+      },
+      {
+        "name": "WordState",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "seen",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "correct",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "mastery",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "correctStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "wrongStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "lapses",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "RunState",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "StreakThresholds",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "correctStreakThreshold",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "wrongStreakThreshold",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "maxMastery",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "GraduationHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "IdSetHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "TransitionHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "CapDecisionHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "DistributionHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "EngineHooks",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "onBatchAssembled",
+            "type": "DistributionHook",
+            "optional": true
+          },
+          {
+            "name": "onWordBatchComposed",
+            "type": "DistributionHook",
+            "optional": true
+          },
+          {
+            "name": "onPoolAdvanced",
+            "type": "DistributionHook",
+            "optional": true
+          },
+          {
+            "name": "onMastered",
+            "type": "IdSetHook",
+            "optional": true
+          },
+          {
+            "name": "onSentenceExcluded",
+            "type": "IdSetHook",
+            "optional": true
+          },
+          {
+            "name": "onRetryDecision",
+            "type": "CapDecisionHook",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "SentenceExclusionReason",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "defaultSentenceState",
+        "kind": "FunctionDeclaration",
+        "signature": "(sentenceId: string) => SentenceState"
+      },
+      {
+        "name": "SentenceState",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "sentenceStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "lastBatchSeen",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "dailyCount",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "sessionWrongStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "active",
+            "type": "boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceRunState",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "resolveEligibleContexts",
+        "kind": "FunctionDeclaration",
+        "signature": "(corpus: SentenceContext[], runState: RunState, allPool: QuizItem[], sentenceRunState: SentenceRunState, batchNum: number, config: { minSeenForSentence: number; sentenceBatchGap: number }, excludeIds?: Set<string>, hooks?: EngineHooks) => { ctx: SentenceContext; tiles: SentenceTile[] }[]"
+      },
+      {
+        "name": "updateSentenceRunState",
+        "kind": "FunctionDeclaration",
+        "signature": "(sentenceRunState: SentenceRunState, results: SentenceQuizResult[], batchNum: number, config: {\n    sentenceCorrectStreakThreshold: number;\n    sentenceWrongStreakThreshold: number;\n  }) => SentenceRunState"
+      },
+      {
+        "name": "QuizQuestion",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "MCQQuestion",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "kind",
+            "type": "'mcq'",
+            "optional": false
+          },
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "direction",
+            "type": "QuizDirection",
+            "optional": false
+          },
+          {
+            "name": "prompt",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "choices",
+            "type": "QuizChoice[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceQuestion",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "kind",
+            "type": "'word-block'",
+            "optional": false
+          },
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "direction",
+            "type": "'english-to-native' | 'native-to-english' | 'native-to-romanization' | 'romanization-to-native'",
+            "optional": false
+          },
+          {
+            "name": "prompt",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "tiles",
+            "type": "SentenceTile[]",
+            "optional": false
+          },
+          {
+            "name": "answer",
+            "type": "string[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceTile",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "native",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "romanization",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "english",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "QuizChoice",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "label",
+            "type": "'a' | 'b' | 'c' | 'd'",
+            "optional": false
+          },
+          {
+            "name": "value",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "isCorrect",
+            "type": "boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "QuizDirection",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "QuizResult",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "WordQuizResult",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "correct",
+            "type": "boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceQuizResult",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "correct",
+            "type": "boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceContext",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "englishSentence",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "wordOrder",
+            "type": "string[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "LANGUAGE_CONFIG",
+        "kind": "VariableDeclaration"
+      },
+      {
+        "name": "LanguageConfig",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordJoin",
+            "type": "WordJoin",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "WordJoin",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "MockDeck",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "id",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "topic",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "lines",
+            "type": "MockLine[]",
+            "optional": false
+          },
+          {
+            "name": "wordIds",
+            "type": "string[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MockLine",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "speaker",
+            "type": "'A' | 'B'",
+            "optional": false
+          },
+          {
+            "name": "native",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "romanization",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "english",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "words",
+            "type": "MockWord[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MockFoundational",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "ThaiFoundational",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "MockVowel",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "id",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "foundationalType",
+            "type": "'vowel'",
+            "optional": false
+          },
+          {
+            "name": "native",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "romanization",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "english",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "position",
+            "type": "'leading' | 'trailing' | 'surrounding'",
+            "optional": false
+          },
+          {
+            "name": "length",
+            "type": "'short' | 'long'",
+            "optional": false
+          },
+          {
+            "name": "language",
+            "type": "'th'",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MockTone",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "id",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "foundationalType",
+            "type": "'tone'",
+            "optional": false
+          },
+          {
+            "name": "native",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "romanization",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "english",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "language",
+            "type": "'th'",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ThaiFoundationalType",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "JapaneseFoundationalType",
+        "kind": "TypeAliasDeclaration"
+      }
+    ],
+    "imports": []
+  },
+  {
+    "file": "src/learn/types/deck.ts",
+    "exports": [
+      {
+        "name": "MockLine",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "speaker",
+            "type": "'A' | 'B'",
+            "optional": false
+          },
+          {
+            "name": "native",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "romanization",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "english",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "words",
+            "type": "MockWord[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MockDeck",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "id",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "topic",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "lines",
+            "type": "MockLine[]",
+            "optional": false
+          },
+          {
+            "name": "wordIds",
+            "type": "string[]",
+            "optional": false
+          }
+        ]
+      }
+    ],
+    "imports": [
+      {
+        "from": "../../../data/mock/mock-words.js",
+        "names": [
+          "MockWord"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/types/foundational.ts",
+    "exports": [
+      {
+        "name": "ThaiFoundationalType",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "JapaneseFoundationalType",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "FoundationalBase",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "ThaiConsonant",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "foundationalType",
+            "type": "'consonant'",
+            "optional": false
+          },
+          {
+            "name": "class",
+            "type": "'middle' | 'high' | 'low'",
+            "optional": false
+          },
+          {
+            "name": "language",
+            "type": "'th'",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ThaiVowel",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "foundationalType",
+            "type": "'vowel'",
+            "optional": false
+          },
+          {
+            "name": "position",
+            "type": "'leading' | 'trailing' | 'surrounding'",
+            "optional": false
+          },
+          {
+            "name": "length",
+            "type": "'short' | 'long'",
+            "optional": false
+          },
+          {
+            "name": "language",
+            "type": "'th'",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ThaiTone",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "foundationalType",
+            "type": "'tone'",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MockVowel",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "id",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "foundationalType",
+            "type": "'vowel'",
+            "optional": false
+          },
+          {
+            "name": "native",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "romanization",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "english",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "position",
+            "type": "'leading' | 'trailing' | 'surrounding'",
+            "optional": false
+          },
+          {
+            "name": "length",
+            "type": "'short' | 'long'",
+            "optional": false
+          },
+          {
+            "name": "language",
+            "type": "'th'",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MockTone",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "id",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "foundationalType",
+            "type": "'tone'",
+            "optional": false
+          },
+          {
+            "name": "native",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "romanization",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "english",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "language",
+            "type": "'th'",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MockFoundational",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "ThaiFoundational",
+        "kind": "TypeAliasDeclaration"
+      }
+    ],
+    "imports": [
+      {
+        "from": "../../../data/mock/mock-consonants.js",
+        "names": [
+          "MockConsonant"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/learn/types/hooks.ts",
+    "exports": [
+      {
+        "name": "IdSetHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "TransitionHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "CapDecisionHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "DistributionHook",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "EngineHooks",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "onBatchAssembled",
+            "type": "DistributionHook",
+            "optional": true
+          },
+          {
+            "name": "onWordBatchComposed",
+            "type": "DistributionHook",
+            "optional": true
+          },
+          {
+            "name": "onPoolAdvanced",
+            "type": "DistributionHook",
+            "optional": true
+          },
+          {
+            "name": "onMastered",
+            "type": "IdSetHook",
+            "optional": true
+          },
+          {
+            "name": "onSentenceExcluded",
+            "type": "IdSetHook",
+            "optional": true
+          },
+          {
+            "name": "onRetryDecision",
+            "type": "CapDecisionHook",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "SentenceExclusionReason",
+        "kind": "TypeAliasDeclaration"
+      }
+    ],
+    "imports": []
+  },
+  {
+    "file": "src/learn/types/quiz.ts",
+    "exports": [
+      {
+        "name": "WordQuizResult",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "correct",
+            "type": "boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceQuizResult",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "correct",
+            "type": "boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "QuizResult",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "QuizDirection",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "QuizChoice",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "label",
+            "type": "'a' | 'b' | 'c' | 'd'",
+            "optional": false
+          },
+          {
+            "name": "value",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "isCorrect",
+            "type": "boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "MCQQuestion",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "kind",
+            "type": "'mcq'",
+            "optional": false
+          },
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "direction",
+            "type": "QuizDirection",
+            "optional": false
+          },
+          {
+            "name": "prompt",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "choices",
+            "type": "QuizChoice[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceTile",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "native",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "romanization",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "english",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceQuestion",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "kind",
+            "type": "'word-block'",
+            "optional": false
+          },
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "direction",
+            "type": "'english-to-native' | 'native-to-english' | 'native-to-romanization' | 'romanization-to-native'",
+            "optional": false
+          },
+          {
+            "name": "prompt",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "tiles",
+            "type": "SentenceTile[]",
+            "optional": false
+          },
+          {
+            "name": "answer",
+            "type": "string[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "QuizQuestion",
+        "kind": "TypeAliasDeclaration"
+      }
+    ],
+    "imports": []
+  },
+  {
+    "file": "src/learn/types/sentence-state.ts",
+    "exports": [
+      {
+        "name": "defaultSentenceState",
+        "kind": "FunctionDeclaration",
+        "signature": "(sentenceId: string) => SentenceState"
+      },
+      {
+        "name": "SentenceState",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "sentenceStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "lastBatchSeen",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "dailyCount",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "sessionWrongStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "active",
+            "type": "boolean",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "SentenceRunState",
+        "kind": "TypeAliasDeclaration"
+      }
+    ],
+    "imports": []
+  },
+  {
+    "file": "src/learn/types/sentence.ts",
+    "exports": [
+      {
+        "name": "SentenceContext",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "sentenceId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "englishSentence",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "wordOrder",
+            "type": "string[]",
+            "optional": false
+          }
+        ]
+      }
+    ],
+    "imports": []
+  },
+  {
+    "file": "src/learn/types/word-state.ts",
+    "exports": [
+      {
+        "name": "updateRunState",
+        "kind": "FunctionDeclaration",
+        "signature": "(state: RunState, wordId: string, wasCorrect: boolean, thresholds: StreakThresholds) => RunState"
+      },
+      {
+        "name": "isMastered",
+        "kind": "FunctionDeclaration",
+        "signature": "(ws: WordState, threshold: number) => boolean"
+      },
+      {
+        "name": "WordState",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "seen",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "correct",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "mastery",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "correctStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "wrongStreak",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "lapses",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "RunState",
+        "kind": "TypeAliasDeclaration"
+      },
+      {
+        "name": "StreakThresholds",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "correctStreakThreshold",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "wrongStreakThreshold",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "maxMastery",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "GraduationHook",
+        "kind": "TypeAliasDeclaration"
+      }
+    ],
+    "imports": []
+  },
+  {
+    "file": "src/learn/utils/shuffle.ts",
+    "exports": [
+      {
+        "name": "shuffle",
+        "kind": "FunctionDeclaration",
+        "signature": "(arr: T[], rng: () => number = Math.random) => T[]"
+      }
+    ],
+    "imports": []
+  }
+]

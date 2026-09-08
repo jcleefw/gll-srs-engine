@@ -1,0 +1,175 @@
+[
+  {
+    "file": "src/shelving/index.ts",
+    "exports": [
+      {
+        "name": "ShelvingConfig",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "stagnationBatchWindow",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "maxShelved",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ShelvedWord",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "shelvedAtBatch",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ShelvingDecision",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "toShelve",
+            "type": "string[]",
+            "optional": false
+          },
+          {
+            "name": "toUnshelve",
+            "type": "string[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ShelvingHooks",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "onShelved",
+            "type": "(ids: string[], reason: string) => void",
+            "optional": true
+          }
+        ]
+      },
+      {
+        "name": "DEFAULT_SHELVING_CONFIG",
+        "kind": "VariableDeclaration"
+      },
+      {
+        "name": "evaluateShelving",
+        "kind": "FunctionDeclaration",
+        "signature": "(stagnantWordIds: string[], currentlyShelved: Set<string>, config: ShelvingConfig, hooks?: ShelvingHooks) => ShelvingDecision"
+      },
+      {
+        "name": "unshelveAll",
+        "kind": "FunctionDeclaration",
+        "signature": "() => Set<string>"
+      }
+    ],
+    "imports": []
+  },
+  {
+    "file": "src/shelving/policy.ts",
+    "exports": [
+      {
+        "name": "evaluateShelving",
+        "kind": "FunctionDeclaration",
+        "signature": "(stagnantWordIds: string[], currentlyShelved: Set<string>, config: ShelvingConfig, hooks?: ShelvingHooks) => ShelvingDecision"
+      },
+      {
+        "name": "unshelveAll",
+        "kind": "FunctionDeclaration",
+        "signature": "() => Set<string>"
+      }
+    ],
+    "imports": [
+      {
+        "from": "./types.js",
+        "names": [
+          "ShelvingConfig",
+          "ShelvingDecision",
+          "ShelvingHooks"
+        ]
+      }
+    ]
+  },
+  {
+    "file": "src/shelving/types.ts",
+    "exports": [
+      {
+        "name": "ShelvingConfig",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "stagnationBatchWindow",
+            "type": "number",
+            "optional": false
+          },
+          {
+            "name": "maxShelved",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "DEFAULT_SHELVING_CONFIG",
+        "kind": "VariableDeclaration"
+      },
+      {
+        "name": "ShelvedWord",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "wordId",
+            "type": "string",
+            "optional": false
+          },
+          {
+            "name": "shelvedAtBatch",
+            "type": "number",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ShelvingDecision",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "toShelve",
+            "type": "string[]",
+            "optional": false
+          },
+          {
+            "name": "toUnshelve",
+            "type": "string[]",
+            "optional": false
+          }
+        ]
+      },
+      {
+        "name": "ShelvingHooks",
+        "kind": "InterfaceDeclaration",
+        "members": [
+          {
+            "name": "onShelved",
+            "type": "(ids: string[], reason: string) => void",
+            "optional": true
+          }
+        ]
+      }
+    ],
+    "imports": []
+  }
+]
