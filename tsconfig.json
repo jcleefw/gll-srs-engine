@@ -17,6 +17,7 @@
     "demo/**/*",
     "test-support/**/*",
     "data/**/*",
+    "scripts/**/*",
     "vitest.config.ts",
     "eslint.config.ts"
   ]

@@ -47,7 +47,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "demo": "tsx demo/learning-runner.ts",
-    "test:mutation": "stryker run"
+    "test:mutation": "stryker run",
+    "codemap": "node scripts/generate-codemap.mjs"
   },
   "engines": {
     "node": ">=20"
