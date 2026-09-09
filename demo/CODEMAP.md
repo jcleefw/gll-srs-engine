@@ -3,7 +3,7 @@
 Terminal demo. Shows how to build a host interface on top of the library —
 all files import from the `learn`/`review`/`shelving` subpaths, same as a web
 server would. This is the one place in the package allowed to do I/O
-(`RULES.md`).
+(`docs/08-boundaries.md`).
 
 ---
 

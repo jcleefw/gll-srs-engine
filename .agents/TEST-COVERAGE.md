@@ -20,7 +20,7 @@ out the test was too weak. This file exists to close that gap.
 | New/changed pure function affecting mastery, streaks, lapses, or the batch queue's retry/completion logic | Unit **and** property test | Golden |
 | New/changed structured multi-step output (session trajectory, batch composition, sentence composition) | Unit **and** golden fixture | Property |
 | `evaluateShelving` or other boundary-sensitive math | Unit **and** property test | — |
-| `FsrsScheduler` / anything touching `ReviewCard.schedulerData` | Unit, snapshot the opaque output | Do not assert on internal shape (see `RULES.md`) |
+| `FsrsScheduler` / anything touching `ReviewCard.schedulerData` | Unit, snapshot the opaque output | Do not assert on internal shape (see `docs/08-boundaries.md`) |
 | Everything else (glue code, config, plain helpers) | Unit test | Property / golden |
 
 If a function looks like it belongs in the "required" column but you're not

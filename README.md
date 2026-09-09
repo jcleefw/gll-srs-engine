@@ -40,7 +40,7 @@ import { evaluateShelving, unshelveAll } from 'gll-srs-engine/shelving';
 import { FsrsScheduler } from 'gll-srs-engine/review';
 ```
 
-`gll-srs-engine/review` is **server-side only** — see [RULES.md](RULES.md).
+`gll-srs-engine/review` is **server-side only** — see [docs/08-boundaries.md](docs/08-boundaries.md).
 
 Mock decks and word data are available under `gll-srs-engine/data/mock/*` for
 development and tests.
@@ -92,7 +92,7 @@ Start with [docs/](docs/), which explains the engine at three depths:
 | 10 min | [Developer view](docs/02-concepts.md) | Architecture and key concepts |
 | 15 min | [Trace view](docs/03-walkthrough.md) | Step-by-step algorithm walkthrough |
 
-See [docs/README.md](docs/README.md) for the full index. [RULES.md](RULES.md)
+See [docs/README.md](docs/README.md) for the full index. [docs/08-boundaries.md](docs/08-boundaries.md)
 records the constraints that keep the engine pure — read it before adding a
 dependency or a new export.
 

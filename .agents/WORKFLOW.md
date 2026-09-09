@@ -3,21 +3,17 @@
 How a task moves from start to done in this repo. This file sequences the
 use of the other governance docs — it doesn't replace them:
 
-- [`RULES.md`](../RULES.md) — architecture boundaries, what belongs in the engine
+- [`docs/08-boundaries.md`](../docs/08-boundaries.md) — architecture boundaries, what belongs in the engine
 - [`TEST-COVERAGE.md`](./TEST-COVERAGE.md) — which test tier a change needs, mutation gate
 - [`docs/06-testing-strategy.md`](../docs/06-testing-strategy.md) — why each test technique exists
-
-> Note: `AGENTS.md` refers to `.agents/RULES.md`. The actual file is
-> `RULES.md` at repo root — there is no duplicate copy in `.agents/`. Treat
-> the two names as the same file until that reference is corrected.
 
 ## 1. Scaffold
 
 - Decide which module the change belongs in (`learn/`, `shelving/`,
-  `review/`), or whether it belongs in this repo at all — check `RULES.md`'s
-  "What does NOT belong here" list first (persistence, I/O, DB clients, CLI
-  glue all belong in a consumer repo, not here).
-- Check `RULES.md`'s internal module boundaries before adding a file or
+  `review/`), or whether it belongs in this repo at all — check
+  `docs/08-boundaries.md`'s "What does NOT belong here" list first (persistence,
+  I/O, DB clients, CLI glue all belong in a consumer repo, not here).
+- Check `docs/08-boundaries.md`'s internal module boundaries before adding a file or
   import: `shelving/`/`review/` never import `learn/` (except
   `GraduationPerformance`), no barrel export, each module's `index.ts` only
   exports its own folder.
@@ -26,7 +22,7 @@ use of the other governance docs — it doesn't replace them:
 
 - Callbacks are plain functions typed against engine types only — if a
   callback's type needs an import from outside the engine, the abstraction
-  belongs outside (`RULES.md`'s decision rule).
+  belongs outside (`docs/08-boundaries.md`'s decision rule).
 - No runtime dependency beyond `ts-fsrs`. No I/O outside `demo/`.
 - `ReviewCard.schedulerData` is opaque — only `FsrsScheduler.ts` reads or
   writes its shape, including in tests.
@@ -92,5 +88,5 @@ push, no autonomous phase advance. Before calling a task done, present:
 ## Non-goals
 
 This workflow does not add a new CI gate and does not change any existing
-threshold. It sequences the use of `RULES.md` and `TEST-COVERAGE.md` — it
-doesn't restate their content.
+threshold. It sequences the use of `docs/08-boundaries.md` and `TEST-COVERAGE.md` —
+it doesn't restate their content.

@@ -76,6 +76,15 @@ Documents the hook system that exposes the engine's internal decisions to a cons
 
 ---
 
+## 🚧 [08-boundaries.md](08-boundaries.md) — The Boundaries View
+
+**Audience:** Developers, agents  
+**When to read**: Before adding a dependency, a new export, or an import that crosses a module boundary
+
+What this library is and isn't (pure engine, no persistence/I/O), the `demo/` I/O exception, the callback typing decision rule, internal module boundaries (`shelving`/`review` vs `learn`), and the external server-only `review` consumer boundary. `RULES.md` at repo root points here.
+
+---
+
 ## 🔗 Related files
 
 - `src/learn/index.ts` — Public API exports (`learn` subpath)

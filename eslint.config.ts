@@ -31,7 +31,7 @@ export default defineConfig(
     },
   },
   {
-    // shelving/ and review/ never import learn/ — see RULES.md
+    // shelving/ and review/ never import learn/ — see docs/08-boundaries.md
     files: ['src/{shelving,review}/**/*.ts'],
     rules: {
       'no-restricted-imports': [
@@ -40,7 +40,7 @@ export default defineConfig(
           patterns: [
             {
               group: ['**/learn/*', '**/learn'],
-              message: 'shelving/ and review/ must not import learn/ — see RULES.md',
+              message: 'shelving/ and review/ must not import learn/ — see docs/08-boundaries.md',
             },
           ],
         },
