@@ -1,42 +1,9 @@
-# gll-srs-engine Rules
+# Rules
 
-**gll-srs-engine is a pure engine library. It has no knowledge of persistence, I/O, or deployment.**
+Every change must comply with [`docs/08-boundaries.md`](docs/08-boundaries.md).
 
-## What this library IS
+## Documentation references
 
-- Engine logic and functions (`runAdaptiveLoop`, `initAdaptiveSession`, etc.)
-- Engine domain types (`RunState`, `SentenceRunState`, `WordState`, `SentenceState`, `GraduationHook`)
-- Plain-function callbacks as extension points — typed against engine types only, no imported interfaces
-- Test infrastructure (auto-answer strategies, scenario fixtures)
-
-## What does NOT belong here
-
-- Persistence interfaces or abstractions (a `LearningStore` belongs in the consumer's storage layer — it implies a DB exists)
-- Any import from a consumer's storage package — the dependency must never flow engine → db
-- Serialization helpers — consumers decide their own format
-- File I/O, DB clients, migration logic
-- CLI runners or application glue code
-- Runtime dependencies beyond `ts-fsrs`, which backs the review scheduler
-
-## Exception: `demo/`
-
-`demo/` contains a mock CLI runner (`learning-runner.ts`) used for manual testing and unit test scenarios. It reads/writes a local JSON file as a lightweight state shim — this is the only permitted I/O in this package. Do not extend it with real DB access; that belongs in a consumer application. `demo/` is excluded from the published build, so it never reaches consumers.
-
-## Decision rule
-
-Callbacks are plain functions: `(state: WordState) => void`. The engine calls them; it does not define or import the interface that implements them. If you find yourself importing a type from outside the engine to describe a callback, the abstraction belongs outside.
-
-## Internal module boundaries
-
-- **`shelving/` and `review/` never import `learn/`** — except `GraduationPerformance`, a primitive snapshot the _host_ derives from `WordState` and passes in; `shelving/` and `review/` never import `WordState` itself.
-- **`shelving/`'s public functions take primitives only.** `evaluateShelving`/`unshelveAll` take `string[]`/`Set<string>`/`ShelvingConfig` — never a `learn/` type.
-- **`ReviewCard.schedulerData` is opaque.** Only `FsrsScheduler.ts` may read or write its internal shape (the serialized ts-fsrs `Card`). No other file — including tests — may destructure it or assert on a property inside it; treat it as an opaque blob passed through unchanged.
-- **No barrel export.** `package.json` `exports` must have no bare `"."` entry — only `/learn`, `/shelving`, `/review`, and `/data/*`.
-- **Sub-path purity.** Each module's `index.ts` only exports from within its own folder (plus `config/` for language settings) — never re-exports a sibling phase's internals as a shortcut.
-
-## External consumer boundary
-
-`review` scheduling is a server-side concern: browser-facing consumers should not
-import `gll-srs-engine/review`. This constraint is enforced in each consuming
-repository's own lint configuration, not here — a library cannot police how it is
-imported. Consumers restricting this today do so via `no-restricted-imports`.
+- **No hand-typed cross-reference lists.** Don't write "See X, Y, Z" lists pointing at other doc files inside a doc's body. Point to [`docs/README.md`](docs/README.md) instead — it's the single enforced index of every file in `docs/`, kept in sync by a blocking pre-commit check. A hand-typed list is a second copy of that index; copies drift.
+- **External references need a real link, or an explicit label.** You can reference things outside this repo (a product spec, a roadmap, another team's doc). Don't write them as a bare name that implies they're a resolvable, in-repo reference (e.g. "the PRD") unless you have a working link/path to it. If there's no physical link, say so explicitly — e.g. "the product spec (maintained externally, no link on file)" — instead of a bare capitalized name that reads as a checked-in file.
+- **Review checklist.** When reviewing any doc, check references, not just prose: broken relative links, stale hand-typed cross-reference lists, and bare external references with no working link that wrongly imply repo scope.

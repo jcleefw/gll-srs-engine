@@ -184,7 +184,7 @@ evaluateShelving(stagnantWordIds: string[], currentlyShelved: Set<string>, confi
 
 ## Review: long-term scheduling with FSRS
 
-Once a word masters, it graduates out of Learning into Review — long-term spaced repetition, distinct from the streak/mastery cycle above. This lives in `src/review/` (`gll-srs-engine/review`) and is intentionally **server-only**: browser-facing consumers never import it — scheduling and serving due reviews belongs on the server. See [RULES.md](../RULES.md).
+Once a word masters, it graduates out of Learning into Review — long-term spaced repetition, distinct from the streak/mastery cycle above. This lives in `src/review/` (`gll-srs-engine/review`) and is intentionally **server-only**: browser-facing consumers never import it — scheduling and serving due reviews belongs on the server. See [08-boundaries.md](08-boundaries.md).
 
 The module is built around one contract, `ReviewScheduler`, with `FsrsScheduler` (wrapping `ts-fsrs`) as its only implementation:
 
