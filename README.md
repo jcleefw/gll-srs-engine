@@ -53,6 +53,35 @@ are the consumer's job. Extension points are plain functions typed against
 engine types, so nothing needs to be imported back into the engine to implement
 them.
 
+### Session lifecycle
+
+```
+initAdaptiveSession(words, config)
+        ↓
+   AdaptiveSessionState {active, queue, runState, ...}
+        ↓
+per batch:
+  assembleBatch(active, wordPool, foundationalPool, wordsPerBatch, options?) → QuizQuestion[]
+  initBatchState(questions) → BatchState
+
+  per question:
+    nextQuestion(batchState) → question + state
+    submitBatchResult(batchState, answer) → state (re-enqueue if wrong)
+
+  finishBatch(batchState) → BatchOutput
+        ↓
+advanceAdaptiveSession(sessionState, batchOutput, config)
+  → updateMasteryState (streak/mastery rules)
+  → updateSentenceRunState (sentence streak & shelving)
+  → nextActivePool (retire mastered, fill from queue)
+  → next AdaptiveSessionState
+        ↓
+repeat until active.length === 0 && queue.length === 0
+```
+
+See [docs/02-concepts.md](docs/02-concepts.md) for the architecture diagram and
+[docs/03-walkthrough.md](docs/03-walkthrough.md) for an annotated example.
+
 ## Documentation
 
 Start with [docs/](docs/), which explains the engine at three depths:
@@ -63,7 +92,7 @@ Start with [docs/](docs/), which explains the engine at three depths:
 | 10 min | [Developer view](docs/02-concepts.md) | Architecture and key concepts |
 | 15 min | [Trace view](docs/03-walkthrough.md) | Step-by-step algorithm walkthrough |
 
-[CODEMAP.md](CODEMAP.md) is the file-level navigation index. [RULES.md](RULES.md)
+See [docs/README.md](docs/README.md) for the full index. [RULES.md](RULES.md)
 records the constraints that keep the engine pure — read it before adding a
 dependency or a new export.
 

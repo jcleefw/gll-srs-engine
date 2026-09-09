@@ -49,6 +49,33 @@ This document clarifies the gap between the product specification and current im
 
 ---
 
+## 🔌 [05-data-pipeline.md](05-data-pipeline.md) — The Data Pipeline View
+
+**Audience:** Developers  
+**When to read**: You're tracing where word/sentence data comes from before it reaches the engine
+
+Conversation JSON → ingestion → database → query layer → engine inputs. Covers what the engine actually receives (`words`, `pool`, `sentenceContexts`, `config`) versus what the caller/host is responsible for.
+
+---
+
+## 🧪 [06-testing-strategy.md](06-testing-strategy.md) — The Testing View
+
+**Audience:** Developers  
+**When to read**: You're adding a test and unsure which tier it belongs in, or want to know why the suite is structured the way it is
+
+How the test suite is organized: unit tests, property-based tests (`fast-check`), and mutation testing — and why each tier exists.
+
+---
+
+## 👁️ [07-observability-hooks.md](07-observability-hooks.md) — The Observability View
+
+**Audience:** Developers  
+**When to read**: You need to observe an internal engine decision (mastery, retries, shelving) that isn't visible from a batch's return value alone
+
+Documents the hook system that exposes the engine's internal decisions to a consuming app, and confirms which of 18 identified silent decision points actually needed a hook versus were already cheap to observe.
+
+---
+
 ## 🔗 Related files
 
 - `src/learn/index.ts` — Public API exports (`learn` subpath)
@@ -61,4 +88,3 @@ This document clarifies the gap between the product specification and current im
 - `src/shelving/policy.ts` — `evaluateShelving`, `unshelveAll`
 - `src/review/index.ts` — Public API exports (`review` subpath, server-only)
 - `src/review/FsrsScheduler.ts` — `ReviewScheduler` implementation wrapping `ts-fsrs`
-- `../CODEMAP.md` — Full package navigation
