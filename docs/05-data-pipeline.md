@@ -57,7 +57,6 @@ The **caller** (demo app, or future host application) is responsible for:
 
 ## Related
 
-- ADR: `product-documentation/architecture/20260513T000000Z-engineering-batch-execution-mechanics.md` — session inputs and composer registry
-- ADR: `product-documentation/architecture/20260512T235900Z-engineering-compose-sentence-batch-boundary.md` — `SentenceContext` fields and `composeSentenceBatch` interface
-- PRD: `product-documentation/prds/20260513T000000Z-sentence-question-ep.md` — `SentenceContext` data model
+- Batch execution mechanics (session inputs and composer registry) and the `composeSentenceBatch` boundary (`SentenceContext` fields and interface) are documented in this repo's product/architecture decision records, maintained externally — no link on file.
+- Sentence question feature (product spec defining `SentenceContext`'s data model: fill-in-the-blank and word-block question formats, sentence unlock rules, scoring) is documented externally in this repo's product spec set — no link on file.
 - Mock data: `data/mock/mock-decks.ts` — current conversation JSON shape

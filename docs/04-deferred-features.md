@@ -1,12 +1,12 @@
 # Deferred Features — What's Not (Yet) Implemented
 
-This document clarifies which features from the product specification are **not yet implemented** in the SRS engine v2. Use this as a reference when reading the PRD or when planning future work.
+This document clarifies which features from the product specification are **not yet implemented** in the SRS engine. Use this as a reference when reading the PRD or when planning future work.
 
 ## Resolved Since Last Review
 
 ## Deferred in Current Implementation
 
-### 1. Question Type Distribution & Percentages (PRD 5.1)
+### 1. Question Type Distribution & Percentages
 
 **PRD specifies**:
 
@@ -16,7 +16,7 @@ This document clarifies which features from the product specification are **not 
 
 **Current engine**: Only two question types exist: **word multiple choice** and **sentence word-block**. No audio recognition questions, no percentage-based distribution logic. Composers are registered and called; batch composition is driven by demand, not by percentage targets.
 
-**Planned**: EP?? (Future roadmap — blocked on audio pipeline)
+**Prerequisite**: requires Audio recognition questions to start
 
 ---
 
@@ -63,6 +63,3 @@ This document clarifies which features from the product specification are **not 
 - **Implementing a deferred feature?** Check here first to understand what the current engine does vs. what the PRD promises.
 - **Reading the PRD and confused?** This clarifies the gap between specification and implementation.
 - **Planning the next epic?** Each deferred feature points to a potential story or epic.
-
-See `01-stakeholder.md`, `02-concepts.md`, and `03-walkthrough.md` for what the current engine actually does.
-

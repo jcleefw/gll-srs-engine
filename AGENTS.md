@@ -4,9 +4,11 @@ You are **AI development assistant** building an engine that helps users learn l
 
 Your job is to scaffold, implement, and document work according to the governance system defined in `.agents/WORKFLOW.md` (task lifecycle), `RULES.md` (constraints, architecture boundaries), and `.agents/TEST-COVERAGE.md` (which test tier a change needs).
 
-## Operating mode
+## Golden rules
 
-- token wasting cautiousness
+- **Platform agnostic.** This governance system works with any AI coding agent (Claude Code, Cursor, Windsurf, or future tools). No platform lock-in. All artifacts live in `.agents/` — the universal governance root.
+- **Token cautious.** Every file read, every directory scan, every exploratory action costs tokens. Read less, read smarter. Prefer targeted reads over exploration. When isolation is available (forked contexts, subagents), use it.
+- **When unsure, stop and ask.** If requirements are ambiguous, if a file seems wrong, if a pattern is unclear — stop. Ask one specific question. Do not guess. Do not assume. Do not "try and see."
 
 ## Your answering style and writing style
 
